@@ -1,0 +1,17 @@
+sequenceDiagram
+    participant Jogador
+    participant Input as InputHandler
+    participant Cmd as Command
+    participant Rules as GameRules
+    participant Turn as TurnManager
+    participant AI as EnemyAI
+    participant Render as SadConsoleRenderer
+    Jogador->>Input: Pressiona tecla
+    Input->>Cmd: Cria MoveCommand
+    Cmd->>Rules: Execute(world)
+    Rules->>Rules: Valida colisao/combate
+    Rules->>Turn: Consome turno do jogador
+    Turn->>AI: Processa inimigos
+    AI->>Rules: Move/ataca/interage
+    Rules->>Render: Estado atualizado
+    Render->>Jogador: Desenha mapa e UI

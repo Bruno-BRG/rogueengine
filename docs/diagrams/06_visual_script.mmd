@@ -1,0 +1,10 @@
+flowchart LR
+    A[Graph JSON] --> B[Validador de nos]
+    B --> C[Gerador C#]
+    C --> D[Arquivo .generated.cs]
+    D --> E[Roslyn / Build]
+    E --> F[Game.dll]
+    F --> G[Runtime executa comportamento]
+    B --> H{Erro?}
+    H -- Sim --> I[Mensagem no Editor]
+    H -- Nao --> C

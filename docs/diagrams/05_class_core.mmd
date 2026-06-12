@@ -1,0 +1,51 @@
+classDiagram
+    class RogueEngine {
+      +Run()
+      +Update()
+      +Draw()
+      +LoadProject(project)
+    }
+    class World {
+      +TileMap Map
+      +List~Entity~ Entities
+      +Player Player
+      +EventBus Events
+    }
+    class Entity {
+      +Guid Id
+      +string Name
+      +Get~T~()
+      +Add(component)
+    }
+    class Component {
+      <<abstract>>
+    }
+    class PositionComponent {
+      +int X
+      +int Y
+    }
+    class RenderableComponent {
+      +int Glyph
+      +Color Foreground
+      +Color Background
+    }
+    class SystemBase {
+      <<abstract>>
+      +Update(World)
+    }
+    class MovementSystem
+    class CombatSystem
+    class TurnManager
+    class IRenderer {
+      <<interface>>
+      +Render(World)
+    }
+    RogueEngine --> World
+    RogueEngine --> TurnManager
+    RogueEngine --> IRenderer
+    World --> Entity
+    Entity --> Component
+    PositionComponent --|> Component
+    RenderableComponent --|> Component
+    MovementSystem --|> SystemBase
+    CombatSystem --|> SystemBase

@@ -1,0 +1,17 @@
+stateDiagram-v2
+    [*] --> Boot
+    Boot --> LoadProject
+    LoadProject --> MainMenu
+    MainMenu --> Playing
+    Playing --> PlayerTurn
+    PlayerTurn --> EnemyTurn
+    EnemyTurn --> RenderFrame
+    RenderFrame --> PlayerTurn
+    Playing --> Paused
+    Paused --> Playing
+    Playing --> SaveGame
+    SaveGame --> Playing
+    Playing --> GameOver
+    GameOver --> MainMenu
+    MainMenu --> Exit
+    Exit --> [*]

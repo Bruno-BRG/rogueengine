@@ -1,0 +1,39 @@
+flowchart TB
+    subgraph Core[Core]
+        GameLoop[GameLoop]
+        World[World]
+        Entity[Entity]
+        Events[EventBus]
+    end
+    subgraph Grid[Grid]
+        TileMap[TileMap]
+        Tile[Tile]
+        Position[Position]
+    end
+    subgraph Rules[Rules]
+        Movement[MovementSystem]
+        Combat[CombatSystem]
+        Inventory[InventorySystem]
+        Interaction[InteractionSystem]
+    end
+    subgraph AI[AI]
+        Behavior[Behavior]
+        Pathfinding[A* / Dijkstra]
+        FOV[Field of View]
+    end
+    subgraph Content[Content]
+        ProcGen[Procedural Generation]
+        Data[JSON Definitions]
+        Save[Save / Load]
+    end
+    subgraph Scripting[Scripting]
+        Roslyn[C# Scripts]
+        Visual[Visual Script Graph]
+        Compiler[Graph -> C#]
+    end
+    Core --> Grid
+    Core --> Rules
+    Rules --> AI
+    Rules --> Content
+    Scripting --> Rules
+    Content --> Core

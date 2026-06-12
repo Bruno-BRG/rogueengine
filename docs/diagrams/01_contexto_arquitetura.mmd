@@ -1,0 +1,13 @@
+flowchart LR
+    Dev[Desenvolvedor do jogo] --> Editor[MomoRogue.Editor]
+    Editor --> Project[Projeto .mrgproj]
+    Editor --> Runtime[MomoRogue.Runtime]
+    Editor --> BuildTool[MomoRogue.BuildTool]
+    BuildTool --> Dotnet[dotnet publish]
+    BuildTool --> Installer[WiX / Instalador]
+    Runtime --> Engine[MomoRogue.Engine]
+    Runtime --> Adapter[MomoRogue.SadConsole]
+    Adapter --> SadConsole[SadConsole]
+    SadConsole --> Host[MonoGame / Janela / Input]
+    Project --> Assets[Assets / Data / Scripts / VisualScripts]
+    Assets --> Runtime

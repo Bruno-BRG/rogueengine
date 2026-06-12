@@ -1,0 +1,12 @@
+flowchart TD
+    A[Projeto do jogo] --> B[Validar game.mrgproj]
+    B --> C[Gerar C# dos VisualScripts]
+    C --> D[Compilar Scripts C#]
+    D --> E[Copiar Assets/Data]
+    E --> F[Montar Runtime]
+    F --> G[dotnet publish]
+    G --> H{Tipo de entrega}
+    H --> I[Portable ZIP]
+    H --> J[EXE single-file]
+    H --> K[Instalador MSI/EXE]
+    K --> L[WiX Toolset]
