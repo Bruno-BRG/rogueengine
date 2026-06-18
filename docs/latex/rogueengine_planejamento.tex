@@ -1,0 +1,354 @@
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{url}
+\usepackage{float}
+\usepackage{placeins}
+\usepackage{flafter}
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[square,authoryear]{natbib}
+\bibpunct{[}{]}{;}{a}{ }{,}
+
+\graphicspath{{figs/}}
+
+% Evita espacos verticais enormes em paginas com pouco texto (sbc-template usa \flushbottom).
+\raggedbottom
+
+% hyperref conflita com natbib + sbc-template e corrompe citacoes no PDF.
+% Formato desejado: [Autor et al. 2022]
+
+\newcommand{\includefig}[2][0.52]{%
+  \adjustbox{max width=\linewidth,max height=#1\textheight,keepaspectratio,center}{%
+    \includegraphics{#2}%
+  }%
+}
+\newcommand{\includefigwide}[1]{\includefig[0.30]{#1}}
+\newcommand{\includefigtall}[1]{\includefig[0.58]{#1}}
+
+\sloppy
+
+\title{RogueEngine: Plano para uma Ferramenta de Jogos Roguelike em C\#}
+
+\author{Bruno Rocha Guimarães\inst{1}}
+
+\address{Curso de Ciência da Computação -- Centro Universitário Jorge Amado (Unijorge)\\
+Salvador -- BA -- Brasil\\
+\email{brg.brunorocha@gmail.com}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This paper describes the plan to build \textbf{RogueEngine}, a tool focused on
+2D roguelike games in C\#/.NET. Instead of using large general engines like Unity or
+Godot \citep{unity2024,godot2024}, the project bets on a smaller scope: grid maps,
+characters, turn-based rules, random dungeons, limited vision, enemy movement, scripts,
+and exporting a playable game. Game rules stay separate from the screen (SadConsole)
+\citep{sadconsole2024,gregory2018,martin2017}. Work is planned in small steps, from a
+first playable version (v0.1) to release 1.0, with tests \citep{xunit2024}, data files in
+JSON \citep{jsonschema2024}, C\# scripts \citep{roslyn2024}, a simple editor
+\citep{avalonia2024}, and a Windows build \citep{netpublish2024}. Expected results follow
+roguelike practice \citep{berlin2008,wild2018,dcss2023} and basic software planning
+\citep{sommerville2015,boehm1988,beck2001}.
+\end{abstract}
+
+\begin{resumo}
+Este trabalho apresenta o plano para criar a \textbf{RogueEngine}, uma ferramenta voltada
+a jogos \textit{roguelike} em 2D --- aqueles em que o mapa é uma grade, o jogador anda por
+turnos e, quando morre, geralmente começa de novo \citep{berlin2008}. Em vez de usar motores
+grandes como Unity ou Godot \citep{unity2024,godot2024}, a ideia é focar só no que esse tipo
+de jogo precisa: mapa em quadradinhos, personagens, combate por turnos, masmorras geradas
+automaticamente, visão limitada, inimigos que perseguem o jogador, scripts e exportação do
+jogo pronto \citep{hendrikx2013,togelius2016}. A regra de ouro do projeto é simples: o
+SadConsole cuida da tela; o núcleo da engine cuida das regras \citep{sadconsole2024,martin2017,
+gregory2018}. O desenvolvimento foi pensado em etapas, da versão 0.1 (algo jogável) até a
+1.0 (primeira versão pública), com testes \citep{xunit2024}, dados em JSON
+\citep{jsonschema2024}, scripts em C\# \citep{roslyn2024}, editor visual simples
+\citep{repenning2017,avalonia2024} e geração de executável para Windows
+\citep{netpublish2024}. Os resultados esperados se apoiam em jogos e estudos já publicados
+\citep{craddock2015,wild2018,dcss2023,pressman2014,sommerville2015,boehm1988}.\\
+\textbf{Palavras-Chave:} Roguelike; motor de jogos; C\#; geração procedural; planejamento de software.
+\end{resumo}
+
+\section{Introdução}
+
+Jogos \textit{roguelike} costumam ter mapa em grade, combate por turnos, morte permanente e
+fases geradas de forma aleatória \citep{berlin2008,adams2014}. São jogos diferentes dos que
+usam mundo contínuo e física em tempo real \citep{gregory2018}. Ferramentas como Unity e Godot
+\citep{unity2024,godot2024} servem para quase qualquer jogo, mas isso traz muita configuração
+e código extra quando o objetivo é só um roguelike 2D \citep{lewis2014,nystrom2014}. Estudos
+sobre geração automática de mapas \citep{hendrikx2013,togelius2011,shaker2016} mostram que uma
+ferramenta feita para o gênero pode já trazer, de fábrica, masmorra, visão do jogador e
+caminho dos inimigos --- sem o desenvolvedor montar tudo do zero.
+
+Por isso nasce o projeto \textbf{RogueEngine}: uma engine menor, feita para esse tipo de jogo,
+buscando facilitar a vida de quem desenvolve \citep{craddock2015,wild2018,dcss2023}. A linguagem
+escolhida foi C\# com .NET \citep{dotnet2024,pinheiro2020}, pela organização do código e pela
+facilidade de gerar o executável final \citep{roslyn2024,netpublish2024}. Para desenhar o jogo
+na tela, entra o SadConsole \citep{sadconsole2024,monogame2024}, que trabalha bem com
+caracteres e mapas em grade \citep{berlin2008,browne2012}.
+
+A ideia central é separar bem as partes: \textit{SadConsole é a tela; RogueEngine.Engine é a
+regra do jogo} \citep{martin2017,fowler2002}. Assim dá para testar movimento, combate e turnos
+sem abrir janela gráfica \citep{gregory2018,xunit2024}. Este texto explica o embasamento
+(Seção~2), como o sistema foi planejado, com diagramas (Seção~3), o que se espera alcançar
+(Seção~4) e as conclusões (Seção~5).
+
+\section{Fundamentação Teórica}
+
+\subsection{O que é um roguelike?}
+
+O gênero nasceu com o jogo \textit{Rogue} e ficou conhecido por mapa em grade, combate por
+turnos, morte que zera o progresso e fases que mudam a cada partida \citep{berlin2008,adams2014,
+koster2004}. Trabalhos sobre a evolução do gênero \citep{browne2012,wild2018} mostram que esse
+formato em ``quadradinhos'' facilita colocar inimigos, calcular o que o jogador enxerga e
+balancear o jogo \citep{nystrom2014,buckland2005,tozour2002}. Jogos como \textit{Dungeon Crawl
+Stone Soup} \citep{dcss2023} provam que uma base bem feita para roguelike aguenta anos de
+melhorias sem precisar reinventar tudo a cada versão.
+
+\subsection{Mapas e inimigos gerados automaticamente}
+
+Em roguelikes, a masmorra costuma ser montada sozinha pelo computador --- salas ligadas por
+corredores, por exemplo \citep{hendrikx2013,togelius2011,shaker2016,togelius2016}. A
+RogueEngine deve permitir repetir o mesmo mapa quando o jogador usar a mesma ``semente''
+(\textit{seed}) \citep{togelius2011,hendrikx2011}. Para os inimigos perseguirem o jogador,
+entram métodos clássicos como A* \citep{hart1968,patel2014} e mapas de distância
+\citep{roguebasin_dijkstra,patel2014}. O campo de visão \citep{patel2016} define o que está
+visível, o que já foi visitado e o que ainda é desconhecido --- parte importante da tensão do
+jogo \citep{berlin2008,wild2018}.
+
+\subsection{Como organizar o código do jogo}
+
+Livros sobre motores de jogo \citep{gregory2018} mostram que vale a pena separar ``regras'' e
+``tela''. Na RogueEngine, cada coisa do jogo (personagem, item, parede) é uma \textit{entidade}
+que ganha pedaços de informação --- posição, vida, aparência --- e sistemas cuidam do
+movimento, combate e turnos \citep{gamma1994,nystrom2014,bjorge2015,martin2017,sommerville2015}.
+Não é o modelo mais purista que existe, mas é simples de entender e de testar.
+
+\subsection{Ferramentas escolhidas}
+
+C\# com .NET \citep{dotnet2024,pinheiro2020} foi escolhido por ser direto de usar e por aceitar
+bem arquivos de dados em JSON \citep{jsonschema2024}. Scripts do jogo podem ser escritos em C\#
+e compilados junto com o projeto \citep{roslyn2024}. O SadConsole \citep{sadconsole2024} desenha
+o mapa na tela; por baixo dele está o MonoGame \citep{monogame2024}, que cuida da janela e do
+teclado \citep{craddock2015,sadconsole2024}. O editor do projeto deve ser uma janela desktop em
+Avalonia \citep{avalonia2024,martin2017,fowler2002}. No fim, o jogo sai como pasta ou
+instalador para Windows \citep{wix2024,netpublish2024,dotnet2024}.
+
+\subsection{Como o trabalho será conduzido}
+
+O plano segue entregas pequenas e frequentes \citep{boehm1988,beck2001,pressman2014}, para não
+crescer demais e virar um projeto impossível \citep{lewis2014}. Cada etapa tem metas claras
+(CA-1 a CA-12) que dizem se aquela parte está pronta ou não \citep{sommerville2015,pressman2014}.
+Testes automáticos no núcleo \citep{xunit2024} ajudam a garantir que as regras continuem
+certas mesmo depois de mudanças \citep{gregory2018,martin2017}.
+
+\section{Processo de Desenvolvimento}
+
+Esta seção mostra como a RogueEngine deve ser construída, da versão 0.0 (só planejamento)
+até a 1.0 (primeira versão utilizável), usando os diagramas do projeto.
+
+\subsection{Visão geral e partes do sistema}
+
+A Figura~\ref{fig:contexto} resume o fluxo: quem cria o jogo usa o \textbf{Editor}, que mexe no
+arquivo do projeto (\texttt{game.reproj}), testa o jogo pelo \textbf{Runtime} e pede a
+\textbf{Ferramenta de build} para gerar o executável \citep{gregory2018,wix2024,netpublish2024}.
+O runtime lê as regras na \textbf{Engine} e manda o SadConsole desenhar na tela.
+
+\begin{figure}[H]
+  \centering
+  \includefigwide{01_contexto_arquitetura}
+  \caption{Visão geral: editor, projeto do jogo, runtime, engine, tela e exportação.}
+  \label{fig:contexto}
+\end{figure}
+\FloatBarrier
+
+A Figura~\ref{fig:modulos} mostra por dentro da engine: mundo do jogo, mapa, personagens,
+regras de movimento e combate, inimigos, geração de fases, arquivos de dados e scripts
+\citep{nystrom2014,buckland2005,hendrikx2013,togelius2016,repenning2017}.
+
+\begin{figure}[H]
+  \centering
+  \includefig{02_modulos_engine}
+  \caption{Partes internas da engine: núcleo, mapa, regras, inimigos, conteúdo e scripts.}
+  \label{fig:modulos}
+\end{figure}
+
+O projeto divide-se em módulos (\texttt{Engine}, \texttt{SadConsole}, \texttt{Runtime},
+\texttt{Editor}, \texttt{BuildTool}). A regra é: o núcleo não depende da tela; a tela depende
+do núcleo \citep{martin2017,gamma1994,gregory2018}.
+
+\subsection{Peças principais do núcleo}
+
+A Figura~\ref{fig:classes} mostra as classes centrais: o \textit{World} guarda o mapa e os
+personagens; cada \textit{Entity} carrega componentes; sistemas atualizam movimento e combate;
+\textit{IRenderer} é só a ponte para desenhar \citep{gregory2018,nystrom2014,bjorge2015}. O
+\textit{TurnManager} organiza a vez do jogador e dos inimigos \citep{berlin2008,nystrom2014,
+buckland2005}.
+
+\begin{figure}[H]
+  \centering
+  \includefig[0.62]{05_class_core}
+  \caption{Classes principais: mundo, entidades, componentes, sistemas e renderização.}
+  \label{fig:classes}
+\end{figure}
+
+\subsection{Etapas de implementação}
+
+O trabalho foi dividido em sete etapas \citep{boehm1988,sommerville2015,pressman2014}:
+
+\textbf{Etapa 1 (v0.1) --- Primeiro protótipo jogável:} montar o projeto .NET, mapa, personagem,
+teclado virando ação, movimento e colisão com paredes \citep{craddock2015,sadconsole2024,
+xunit2024}. Metas CA-2 e CA-3.
+
+\textbf{Etapa 2 (v0.2) --- Roguelike básico:} masmorra aleatória, turnos, inimigo que segue o
+jogador, combate simples e mensagens na tela \citep{hendrikx2013,togelius2016,buckland2005,
+roguebasin_dijkstra,berlin2008,dcss2023}. Metas CA-4 a CA-6.
+
+\textbf{Etapa 3 (v0.3) --- Projeto e dados:} arquivo \texttt{game.reproj}, personagens e itens em
+JSON, salvar/carregar partida, modelo de projeto para copiar \citep{jsonschema2024,fowler2002}.
+Metas CA-1, CA-7 e CA-10.
+
+\textbf{Etapa 4 (v0.4) --- Scripts em C\#:} comportamentos escritos em código, compilados na hora
+de gerar o jogo, com mensagens de erro claras \citep{roslyn2024,gamma1994}. Meta CA-8.
+
+\textbf{Etapa 5 (v0.5) --- Gerar o jogo:} comando \texttt{rogueengine build}, checagem dos
+arquivos, cópia de imagens e sons, pasta ou ZIP pronto para jogar \citep{netpublish2024,
+pressman2014}. Metas CA-11 e CA-12.
+
+\textbf{Etapa 6 (v0.6) --- Editor:} programa para criar projeto, editar dados e testar o jogo sem
+sair do editor \citep{avalonia2024,martin2017}.
+
+\textbf{Etapa 7 (v0.7) --- Scripts visuais:} montar lógica ligando blocos (evento, condição,
+ação) que viram C\# na exportação \citep{repenning2017,roslyn2024}. Meta CA-9.
+
+\subsection{O que o usuário pode fazer e como o jogo é exportado}
+
+\begin{figure}[H]
+  \centering
+  \includefig[0.55]{08_casos_de_uso}
+  \caption{O que o criador do jogo e o jogador final podem fazer na plataforma.}
+  \label{fig:casos}
+\end{figure}
+
+A Figura~\ref{fig:casos} lista ações do desenvolvedor (criar projeto, editar personagens,
+mapas, scripts, testar, exportar) e do jogador (abrir o jogo, salvar e carregar)
+\citep{sommerville2015,adams2014,pressman2014}.
+
+A Figura~\ref{fig:pipeline} mostra o caminho até o jogo pronto: validar arquivos, gerar código
+dos scripts visuais, compilar, copiar assets e publicar como ZIP, executável ou instalador
+\citep{netpublish2024,wix2024,roslyn2024,repenning2017}.
+
+\begin{figure}[H]
+  \centering
+  \includefigtall{03_pipeline_build}
+  \caption{Passo a passo para exportar o jogo.}
+  \label{fig:pipeline}
+\end{figure}
+
+\subsection{Turnos e estados do jogo}
+
+A Figura~\ref{fig:sequencia} explica um turno: o jogador aperta uma tecla, o jogo verifica se o
+movimento vale, passa a vez, os inimigos agem e a tela atualiza \citep{nystrom2014,buckland2005,
+berlin2008,patel2014}.
+
+\begin{figure}[H]
+  \centering
+  \includefigwide{04_sequence_turno}
+  \caption{O que acontece em um turno de jogo.}
+  \label{fig:sequencia}
+\end{figure}
+
+A Figura~\ref{fig:estado} mostra os ``modos'' do programa: abrir projeto, menu, jogando, pausa,
+salvar, game over e sair \citep{nystrom2014,gregory2018,gamma1994}.
+
+\begin{figure}[H]
+  \centering
+  \includefig[0.40]{07_estado_runtime}
+  \caption{Estados do programa enquanto o jogo roda.}
+  \label{fig:estado}
+\end{figure}
+
+\subsection{Scripts visuais}
+
+A Figura~\ref{fig:visual} mostra como um gráfico de blocos vira código C\#, é compilado e roda
+no jogo; se der erro, o editor avisa \citep{repenning2017,roslyn2024,gamma1994}.
+
+\begin{figure}[H]
+  \centering
+  \includefig[0.34]{06_visual_script}
+  \caption{Do desenho dos blocos até o jogo executar o comportamento.}
+  \label{fig:visual}
+\end{figure}
+
+Na primeira versão, os scripts visuais cobrem situações simples (porta, spawn, mensagem), sem
+pretender substituir um editor gigante \citep{roslyn2024,gregory2018,lewis2014,repenning2017}.
+
+\section{Resultados Esperados}
+
+Com base no que outros autores e projetos já mostraram \citep{gregory2018,hendrikx2013,lewis2014},
+esta seção resume o que se espera alcançar.
+
+\subsection{No funcionamento do sistema}
+
+Separar regras e tela deve permitir testar o jogo ``por dentro'', sem abrir janela, o que é mais
+rápido e confiável \citep{martin2017,xunit2024,gregory2018}. Masmorras com salas e corredores,
+com opção de repetir o mesmo layout usando uma semente, seguem o que jogadores de roguelike já
+conhecem \citep{hendrikx2013,togelius2011,berlin2008,dcss2023}. Inimigos que perseguem usando
+caminhos conhecidos \citep{hart1968,patel2014,roguebasin_dijkstra,buckland2005,wild2018} devem
+parecer com o comportamento de títulos clássicos. Scripts em C\# compilados na exportação
+\citep{roslyn2024,pinheiro2020,lewis2014} devem ser viáveis para projetos pequenos.
+
+\subsection{Na experiência de quem cria o jogo}
+
+O fluxo desejado é direto: criar projeto, editar arquivos de dados, testar e gerar o
+executável \citep{adams2014,pressman2014,sommerville2015,unity2024,godot2024,lewis2014}. Tudo
+fica em pastas que podem ir para o Git \citep{fowler2002,beck2001}. O jogo final deve rodar no
+Windows sem instalação complicada \citep{netpublish2024,craddock2015,pinheiro2020}.
+
+\subsection{Na forma de trabalhar}
+
+Cada versão (0.1 até 1.0) termina com metas objetivas (CA-1 a CA-12), para saber se o projeto
+está no trilho \citep{boehm1988,beck2001,sommerville2015,pressman2014}. Ficou de fora, de
+propósito, coisas como multiplayer, loja de assets e física 3D --- para não estourar o prazo
+\citep{lewis2014,wild2018}. Documentação e testes acompanham o código
+\citep{martin2017,sommerville2015}.
+
+\subsection{Limitações previstas}
+
+Scripts, na primeira versão, são código do próprio desenvolvedor --- não há ``caixa segura''
+para mods de desconhecidos \citep{gregory2018,roslyn2024,pressman2014,lewis2014}. O editor de
+blocos começa simples; não tenta competir com Unity ou Godot \citep{repenning2017,unity2024,
+adams2014}. Versão para celular fica para depois \citep{pressman2014}.
+
+\section{Conclusão}
+
+Este artigo apresentou o plano da \textbf{RogueEngine}, ferramenta para criar roguelikes 2D em
+C\#/.NET. A proposta parte de como esse tipo de jogo já é feito há anos
+\citep{berlin2008,dcss2023,wild2018}, de boas práticas de organização de software
+\citep{gregory2018,nystrom2014,martin2017,sommerville2015,boehm1988,pressman2014} e de um
+desenvolvimento em etapas pequenas \citep{beck2001}. Em vez de uma engine para tudo, o foco é
+mapa em grade, turnos, fases aleatórias, visão limitada, scripts e exportar o jogo
+\citep{hendrikx2013,unity2024,godot2024,lewis2014}.
+
+Os oito diagramas mostram como as peças se conectam e como o jogo sai do computador do
+desenvolvedor até virar um programa que qualquer pessoa pode abrir \citep{wix2024,
+netpublish2024}. Espera-se, ao final, ter uma engine testável, um roguelike mínimo jogável,
+leitura de dados em arquivos, scripts compilados, editor, exportação e pelo menos dois jogos de
+exemplo \citep{craddock2015,pinheiro2020,hendrikx2013,xunit2024,martin2017}.
+
+O próximo passo é a Etapa~1: montar o projeto, desenhar um mapa, mover o jogador e tratar
+colisão --- provando na prática que \textit{SadConsole é tela; Engine é regra}
+\citep{beck2001,boehm1988,roguecelebration2022,sadconsole2024}. A ideia é contribuir com algo
+útil para quem quer fazer roguelike no Brasil, com código e documentação abertos
+\citep{pinheiro2020,hendrikx2011}.
+
+\bibliographystyle{plainnat}
+\bibliography{referencias}
+
+\end{document}
