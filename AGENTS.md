@@ -6,7 +6,7 @@ Instructions for AI coding agents working in this repository.
 
 **RogueEngine** (`rogueengine`) is a specialized C# engine for 2D tile-based roguelikes. It is **not** a general-purpose game engine. Scope is intentionally narrow: grid maps, entities, turn-based rules, procgen, FOV, pathfinding, scripting, and game export.
 
-**Status:** v0.0 — planning. Repository scaffold exists; **no runtime C# code yet**.
+**Status:** v0.5 — portable build. Phases 1–5 done; World Toolkit planned for v0.9.
 
 ## Canonical naming
 
@@ -27,6 +27,7 @@ Legacy name **MomoRogue** appears only in older planning PDFs/diagrams under `do
 | Module | May depend on | Must not depend on |
 |--------|---------------|-------------------|
 | `RogueEngine.Engine` | BCL only | SadConsole, Avalonia, UI |
+| `RogueEngine.Toolkit` | Engine | SadConsole, Avalonia, UI |
 | `RogueEngine.SadConsole` | Engine, SadConsole | Avalonia |
 | `RogueEngine.Runtime` | Engine, SadConsole adapter | Editor UI |
 | `RogueEngine.Editor` | Engine, BuildTool (later) | — |
@@ -37,7 +38,8 @@ Engine logic must be testable **without** opening a graphical window. Use `IRend
 ## Repository layout
 
 ```
-src/RogueEngine.Engine/       # Core: World, Entity, systems, procgen, save/load
+src/RogueEngine.Engine/       # Core: World, Entity, systems, save/load
+src/RogueEngine.Toolkit/      # ProcGen, bitmask, overworld, FOV, pathfinding, helpers (planned v0.8–0.9)
 src/RogueEngine.SadConsole/   # Render + input adapter
 src/RogueEngine.Runtime/      # Runs a game project
 src/RogueEngine.Editor/       # Avalonia desktop tool (later phases)
@@ -79,8 +81,9 @@ Do not jump ahead to editor, visual scripting, or installer unless explicitly re
 ### Dependency direction (allowed)
 
 ```
-Engine ← SadConsole, Runtime, BuildTool, Editor
+Engine ← Toolkit, SadConsole, Runtime, BuildTool, Editor
 Engine ← Tests
+Toolkit ← Runtime, Editor, BuildTool, Tests
 ```
 
 Never: `Engine → SadConsole` or `Engine → Avalonia`.

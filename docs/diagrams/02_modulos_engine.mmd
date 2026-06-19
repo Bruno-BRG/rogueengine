@@ -18,22 +18,29 @@ flowchart TB
     end
     subgraph AI[AI]
         Behavior[Behavior]
-        Pathfinding[A* / Dijkstra]
-        FOV[Field of View]
+        Pathfinding[A_star_Dijkstra]
+        FOV[FieldOfView]
+    end
+    subgraph Toolkit[RogueEngine.Toolkit]
+        ProcGen[IMapGenerator_registry]
+        Bitmask[TileBitmask_autotile]
+        Overworld[OverworldCellGraph]
+        Helpers[Spawn_Carve_Queries]
     end
     subgraph Content[Content]
-        ProcGen[Procedural Generation]
-        Data[JSON Definitions]
-        Save[Save / Load]
+        Data[JSON_Definitions]
+        Save[Save_Load]
     end
     subgraph Scripting[Scripting]
-        Roslyn[C# Scripts]
-        Visual[Visual Script Graph]
-        Compiler[Graph -> C#]
+        Roslyn[CSharp_Scripts]
+        Visual[Visual_Script_Graph]
+        Compiler[Graph_to_CSharp]
     end
     Core --> Grid
     Core --> Rules
     Rules --> AI
     Rules --> Content
+    Toolkit --> Grid
+    Toolkit --> AI
     Scripting --> Rules
     Content --> Core

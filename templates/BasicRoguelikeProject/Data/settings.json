@@ -1,0 +1,7 @@
+{
+  "mapWidth": 80,
+  "mapHeight": 22,
+  "messagePanelHeight": 3,
+  "minEnemies": 3,
+  "maxEnemies": 5
+}

@@ -2,7 +2,7 @@
 
 A specialized 2D tile-based roguelike engine in C#. RogueEngine is not a general-purpose game engine like Unity or Godot — it focuses on a narrower domain: grid maps, entities, turn-based gameplay, procedural generation, field of view, pathfinding, gameplay scripts, and exporting finished games as executables or installers.
 
-**Status:** Planning / pre-MVP — architecture documentation is complete; no runtime code yet.
+**Status:** v0.5 — portable build via CLI. World Toolkit (multi-algorithm procgen, bitmask, overworld) planned for v0.9.
 
 ## What is this?
 
@@ -30,7 +30,8 @@ See the full architecture diagram in [docs/rendered/01_contexto_arquitetura.svg]
 
 | Path | Purpose |
 |------|---------|
-| `src/RogueEngine.Engine/` | Core game rules — world, entities, systems, procgen, save/load. No UI dependencies. |
+| `src/RogueEngine.Engine/` | Core game rules — world, entities, systems, save/load. No UI dependencies. |
+| `src/RogueEngine.Toolkit/` | ProcGen algorithms, tile bitmask/autotile, overworld graphs, FOV, pathfinding, helper APIs (planned). |
 | `src/RogueEngine.SadConsole/` | Renderer and input adapter for SadConsole. |
 | `src/RogueEngine.Runtime/` | Application that loads and runs a game project. |
 | `src/RogueEngine.Editor/` | Desktop editor for creating and configuring projects (Avalonia). |
@@ -101,7 +102,14 @@ Full version milestones, implementation phases, MVP criteria, and technical back
 
 ## Getting started
 
-Solution and build instructions will be added in Phase 1. For now, review the planning material in `docs/` to understand the intended architecture.
+```bash
+dotnet build
+dotnet test
+dotnet run --project src/RogueEngine.Runtime -- templates/BasicRoguelikeProject/game.reproj
+dotnet run --project src/RogueEngine.BuildTool -- build templates/BasicRoguelikeProject/game.reproj
+```
+
+Exported game runs as: `Build/BasicRoguelike.exe game.reproj`
 
 ## License
 
