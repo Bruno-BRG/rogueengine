@@ -1,5 +1,6 @@
 {
   "name": "BasicRoguelike",
   "version": "1",
-  "dataPath": "Data"
+  "dataPath": "Data",
+  "defaultGenerator": "generators/dungeon.json"
 }

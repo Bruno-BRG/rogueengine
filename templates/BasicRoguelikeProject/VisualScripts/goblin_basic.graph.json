@@ -1,0 +1,10 @@
+{
+  "id": "goblin_basic",
+  "entryNodeId": "n1",
+  "nodes": [
+    { "id": "n1", "type": "OnTurn", "next": "n2" },
+    { "id": "n2", "type": "IsPlayerAdjacent", "trueBranch": "n3", "falseBranch": "n4" },
+    { "id": "n3", "type": "AttackAtPlayer", "next": null },
+    { "id": "n4", "type": "MoveTowardPlayer", "next": null }
+  ]
+}

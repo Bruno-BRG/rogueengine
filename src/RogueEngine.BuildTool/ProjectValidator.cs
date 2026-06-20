@@ -50,27 +50,29 @@ public static class ProjectValidator
                 errors.Add($"Actor '{actor.Id}' has invalid maxHp.");
             }
 
-            if (!string.IsNullOrWhiteSpace(actor.Behavior) && !Directory.Exists(project.ScriptsDirectory))
+            if (!string.IsNullOrWhiteSpace(actor.Behavior))
             {
-                errors.Add($"Actor '{actor.Id}' references behavior '{actor.Behavior}', but Scripts/ directory is missing.");
+                var hasVisualScript = project.VisualScripts.Any(graph =>
+                    graph.Id.Equals(actor.Behavior, StringComparison.OrdinalIgnoreCase));
+                var hasScriptsDirectory = Directory.Exists(project.ScriptsDirectory);
+
+                if (!hasVisualScript && !hasScriptsDirectory)
+                {
+                    errors.Add(
+                        $"Actor '{actor.Id}' references behavior '{actor.Behavior}', but no Scripts/ or matching visual script was found.");
+                }
             }
         }
     }
 
     private static void ValidateScripts(LoadedProject project, List<string> errors)
     {
-        if (!Directory.Exists(project.ScriptsDirectory))
+        var compileResult = ScriptBuildHelper.CompileProjectScripts(project, errors);
+        if (errors.Count > 0)
         {
             return;
         }
 
-        var scriptFiles = Directory.GetFiles(project.ScriptsDirectory, "*.cs", SearchOption.TopDirectoryOnly);
-        if (scriptFiles.Length == 0)
-        {
-            return;
-        }
-
-        var compileResult = ScriptCompiler.Compile(scriptFiles);
         if (!compileResult.Success)
         {
             errors.AddRange(compileResult.Errors);

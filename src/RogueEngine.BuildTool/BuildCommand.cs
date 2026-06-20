@@ -5,9 +5,11 @@ namespace RogueEngine.BuildTool;
 
 public static class BuildCommand
 {
-    public static BuildResult Execute(string reprojPath, string? outputDirectory = null)
+    public static BuildResult Execute(string reprojPath, string? outputDirectory = null, IBuildLogSink? logSink = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(reprojPath);
+
+        using var _ = new BuildLogScope(logSink);
 
         BuildLogger.Info($"Loading project: {reprojPath}");
 
@@ -24,11 +26,30 @@ public static class BuildCommand
 
         var project = validation.Project;
         var actorCount = project.Actors.Count;
-        var scriptCount = Directory.Exists(project.ScriptsDirectory)
+        var manualScriptCount = Directory.Exists(project.ScriptsDirectory)
             ? Directory.GetFiles(project.ScriptsDirectory, "*.cs", SearchOption.TopDirectoryOnly).Length
             : 0;
+        var visualScriptCount = project.VisualScripts.Count;
 
-        BuildLogger.Success($"Validation passed ({actorCount} actors, {scriptCount} script(s))");
+        var scriptErrors = new List<string>();
+        var compileResult = ScriptBuildHelper.CompileProjectScripts(project, scriptErrors);
+        if (scriptErrors.Count > 0 || !compileResult.Success)
+        {
+            foreach (var error in scriptErrors.Concat(compileResult.Errors))
+            {
+                BuildLogger.Error(error);
+            }
+
+            return new BuildResult { Errors = scriptErrors.Concat(compileResult.Errors).ToList() };
+        }
+
+        if (manualScriptCount > 0 || visualScriptCount > 0)
+        {
+            BuildLogger.Success(
+                $"Scripts compiled ({manualScriptCount} manual, {visualScriptCount} visual)");
+        }
+
+        BuildLogger.Success($"Validation passed ({actorCount} actors)");
 
         var buildDirectory = outputDirectory ?? Path.Combine(project.ProjectRoot, "Build");
         if (Directory.Exists(buildDirectory))

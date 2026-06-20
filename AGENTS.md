@@ -6,7 +6,7 @@ Instructions for AI coding agents working in this repository.
 
 **RogueEngine** (`rogueengine`) is a specialized C# engine for 2D tile-based roguelikes. It is **not** a general-purpose game engine. Scope is intentionally narrow: grid maps, entities, turn-based rules, procgen, FOV, pathfinding, scripting, and game export.
 
-**Status:** v0.5 — portable build. Phases 1–5 done; World Toolkit planned for v0.9.
+**Status:** v0.7.1 — editor shell & project hub. Phases 1–7 done; editor shell in progress (see `docs/planning/EDITOR_VISION.md`).
 
 ## Canonical naming
 

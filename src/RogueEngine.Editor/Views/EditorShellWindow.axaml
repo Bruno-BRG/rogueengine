@@ -1,0 +1,315 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RogueEngine.Editor.ViewModels"
+        x:Class="RogueEngine.Editor.Views.EditorShellWindow"
+        x:DataType="vm:EditorShellViewModel"
+        Title="{Binding WindowTitle}"
+        Width="1280"
+        Height="820"
+        MinWidth="1100"
+        MinHeight="700"
+        Background="#111114"
+        Foreground="#e3e3e6">
+
+  <DockPanel>
+    <!-- Toolbar -->
+    <Border DockPanel.Dock="Top" Background="#16161a" BorderBrush="#2d2d35" BorderThickness="0,0,0,1" Padding="12,8">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+          <Button Content="← Projects" Command="{Binding ReturnToLauncherCommand}" ToolTip.Tip="Back to project hub" />
+          <Separator Width="1" Height="20" Background="#2d2d35" Margin="4,0" />
+          <Button Content="💾 Save" Command="{Binding SaveProjectCommand}" />
+          <Button Content="🔍 Validate" Command="{Binding ValidateProjectCommand}" />
+          <Button Classes="playtest" Content="▶ Playtest" Command="{Binding PlaytestCommand}" />
+          <Button Classes="build" Content="📦 Build" Command="{Binding BuildProjectCommand}" />
+        </StackPanel>
+        <TextBlock Grid.Column="2" Text="{Binding StatusText}" VerticalAlignment="Center" Foreground="#9a9a9f" FontWeight="SemiBold" />
+      </Grid>
+    </Border>
+
+    <!-- Console -->
+    <Border DockPanel.Dock="Bottom" Height="160" Background="#0c0c0f" BorderBrush="#2d2d35" BorderThickness="0,1,0,0" Padding="12">
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="OUTPUT" FontSize="10" FontWeight="Bold" Foreground="#9a9a9f" Margin="0,0,0,6" LetterSpacing="1" />
+        <TextBox Text="{Binding OutputText}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                 FontFamily="Consolas, Cascadia Code, Courier New, monospace" Background="#0c0c0f" Foreground="#d1d1d6" BorderThickness="0" FontSize="11" />
+      </DockPanel>
+    </Border>
+
+    <!-- Main 3-column layout -->
+    <Grid ColumnDefinitions="260,*,300">
+      <!-- Resource tree -->
+      <Border Grid.Column="0" Background="#16161a" BorderBrush="#2d2d35" BorderThickness="0,0,1,0">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="RESOURCES" FontSize="10" FontWeight="Bold" Foreground="#9a9a9f" Margin="12,12,12,8" LetterSpacing="1" />
+          <TreeView x:Name="ResourceTreeView" DockPanel.Dock="Top" ItemsSource="{Binding ResourceTree}" DoubleTapped="OnResourceDoubleTapped" Margin="4">
+            <TreeView.ItemTemplate>
+              <TreeDataTemplate ItemsSource="{Binding Children}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <TextBlock Text="{Binding Icon}" />
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                </StackPanel>
+              </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+          </TreeView>
+        </DockPanel>
+      </Border>
+
+      <!-- Workspace -->
+      <Grid Grid.Column="1" RowDefinitions="Auto,*" Margin="8">
+        <!-- Document tabs -->
+        <Border Grid.Row="0" Background="#16161a" BorderBrush="#2d2d35" BorderThickness="1" CornerRadius="6,6,0,0">
+          <ListBox ItemsSource="{Binding OpenDocuments}" SelectedItem="{Binding SelectedDocument}" Background="Transparent" BorderThickness="0">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" />
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="4,2">
+                  <TextBlock Text="{Binding Icon}" />
+                  <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                  <TextBlock Text="●" IsVisible="{Binding IsModified}" Foreground="#e05300" FontSize="8" VerticalAlignment="Center" />
+                </StackPanel>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Border>
+
+        <!-- Workspace content -->
+        <Border Grid.Row="1" Background="#1c1c21" BorderBrush="#2d2d35" BorderThickness="1,0,1,1" CornerRadius="0,0,6,6" Padding="16">
+          <Grid>
+            <!-- Welcome -->
+            <StackPanel IsVisible="{Binding IsWelcomeDocument}" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12" MaxWidth="420">
+              <TextBlock Text="🏠" FontSize="48" HorizontalAlignment="Center" />
+              <TextBlock Text="Select a resource from the tree" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" />
+              <TextBlock Text="Double-click Scenes, Actors, Scripts, or Visual Scripts to open them in tabs. Use Playtest (F5) to run your game." Foreground="#9a9a9f" TextWrapping="Wrap" TextAlignment="Center" />
+            </StackPanel>
+
+            <!-- Settings -->
+            <ScrollViewer IsVisible="{Binding IsSettingsDocument}">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Project Settings" FontSize="20" FontWeight="Bold" />
+                <Grid ColumnDefinitions="160,*">
+                  <TextBlock Grid.Column="0" Text="Name" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding ProjectName}" />
+                </Grid>
+                <Grid ColumnDefinitions="160,*">
+                  <TextBlock Grid.Column="0" Text="Map width" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="10" Maximum="200" Value="{Binding MapWidth}" />
+                </Grid>
+                <Grid ColumnDefinitions="160,*">
+                  <TextBlock Grid.Column="0" Text="Map height" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="10" Maximum="100" Value="{Binding MapHeight}" />
+                </Grid>
+                <Grid ColumnDefinitions="160,*">
+                  <TextBlock Grid.Column="0" Text="Message panel" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="1" Maximum="20" Value="{Binding MessagePanelHeight}" />
+                </Grid>
+                <Grid ColumnDefinitions="160,*">
+                  <TextBlock Grid.Column="0" Text="Min enemies" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="0" Maximum="50" Value="{Binding MinEnemies}" />
+                </Grid>
+                <Grid ColumnDefinitions="160,*">
+                  <TextBlock Grid.Column="0" Text="Max enemies" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="0" Maximum="50" Value="{Binding MaxEnemies}" />
+                </Grid>
+              </StackPanel>
+            </ScrollViewer>
+
+            <!-- Scene -->
+            <Grid IsVisible="{Binding IsSceneDocument}" RowDefinitions="Auto,*">
+              <StackPanel Grid.Row="0" Spacing="12">
+                <TextBlock Text="Scene Editor" FontSize="20" FontWeight="Bold" />
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Scene ID" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding SceneId}" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Display name" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding SceneName}" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Generator" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding SceneGenerator}" Watermark="generators/dungeon.json" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*,140,*">
+                  <TextBlock Grid.Column="0" Text="Width" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="10" Maximum="200" Value="{Binding SceneWidth}" />
+                  <TextBlock Grid.Column="2" Text="Height" VerticalAlignment="Center" Margin="12,0,0,0" />
+                  <NumericUpDown Grid.Column="3" Minimum="10" Maximum="100" Value="{Binding SceneHeight}" />
+                </Grid>
+              </StackPanel>
+              <Border Grid.Row="1" Margin="0,16,0,0" Background="#0c0c0f" BorderBrush="#2d2d35" BorderThickness="1" CornerRadius="4" Padding="12">
+                <StackPanel Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Center">
+                  <TextBlock Text="🗺 MAP VIEWPORT" FontWeight="Bold" Foreground="#9a9a9f" HorizontalAlignment="Center" />
+                  <TextBlock Text="Tile painter and entity placement arrive in Phase E2." Foreground="#7a7a80" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="360" />
+                </StackPanel>
+              </Border>
+            </Grid>
+
+            <!-- Actor -->
+            <ScrollViewer IsVisible="{Binding IsActorDocument}">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Actor Editor" FontSize="20" FontWeight="Bold" />
+                <Border Width="64" Height="64" Background="#232329" CornerRadius="8" HorizontalAlignment="Left">
+                  <TextBlock Text="{Binding ActorGlyph}" FontSize="32" FontWeight="Bold" Foreground="#0dbd85" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="ID" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding ActorId}" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Glyph" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding ActorGlyph}" MaxLength="1" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*,*,*">
+                  <TextBlock Grid.Column="0" Text="RGB" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="0" Maximum="255" Value="{Binding ActorColorR}" />
+                  <NumericUpDown Grid.Column="2" Minimum="0" Maximum="255" Value="{Binding ActorColorG}" Margin="4,0" />
+                  <NumericUpDown Grid.Column="3" Minimum="0" Maximum="255" Value="{Binding ActorColorB}" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Max HP" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="1" Maximum="999" Value="{Binding ActorMaxHp}" />
+                </Grid>
+                <CheckBox Content="Is player" IsChecked="{Binding ActorIsPlayer}" />
+                <CheckBox Content="Blocks movement" IsChecked="{Binding ActorBlocksMovement}" />
+                <CheckBox Content="Chase AI" IsChecked="{Binding ActorHasChaseAI}" />
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Behavior" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding ActorBehavior}" />
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Content="➕ Add Actor" Command="{Binding AddActorCommand}" />
+                  <Button Content="➖ Remove" Command="{Binding RemoveActorCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </ScrollViewer>
+
+            <!-- Generator -->
+            <ScrollViewer IsVisible="{Binding IsGeneratorDocument}">
+              <StackPanel Spacing="12">
+                <TextBlock Text="Map Generator" FontSize="20" FontWeight="Bold" />
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="ID" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding GeneratorId}" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Algorithm" VerticalAlignment="Center" />
+                  <ComboBox Grid.Column="1" ItemsSource="{Binding GeneratorAlgorithms}" SelectedItem="{Binding GeneratorAlgorithm}" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Width" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="10" Maximum="200" Value="{Binding GeneratorWidth}" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Height" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="10" Maximum="100" Value="{Binding GeneratorHeight}" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Seed" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding GeneratorSeedText}" Watermark="Random if empty" />
+                </Grid>
+              </StackPanel>
+            </ScrollViewer>
+
+            <!-- Visual script -->
+            <Grid IsVisible="{Binding IsVisualScriptDocument}" ColumnDefinitions="240,*">
+              <DockPanel Grid.Column="0" Margin="0,0,12,0">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                  <Button Content="➕ Node" Command="{Binding AddVisualNodeCommand}" />
+                  <Button Content="➖" Command="{Binding RemoveVisualNodeCommand}" />
+                </StackPanel>
+                <Button DockPanel.Dock="Bottom" Content="⚡ Preview C#" Command="{Binding PreviewVisualScriptCommand}" Classes="playtest" Margin="0,8,0,0" />
+                <ListBox ItemsSource="{Binding VisualNodes}" SelectedItem="{Binding SelectedVisualNode}" />
+              </DockPanel>
+              <ScrollViewer Grid.Column="1">
+                <StackPanel Spacing="10">
+                  <Grid ColumnDefinitions="120,*">
+                    <TextBlock Grid.Column="0" Text="Graph ID" />
+                    <TextBox Grid.Column="1" Text="{Binding VisualGraphId}" />
+                  </Grid>
+                  <Grid ColumnDefinitions="120,*">
+                    <TextBlock Grid.Column="0" Text="Entry node" />
+                    <TextBox Grid.Column="1" Text="{Binding VisualGraphEntryNodeId}" />
+                  </Grid>
+                  <Grid ColumnDefinitions="120,*">
+                    <TextBlock Grid.Column="0" Text="Node ID" />
+                    <TextBox Grid.Column="1" Text="{Binding VisualNodeId}" />
+                  </Grid>
+                  <Grid ColumnDefinitions="120,*">
+                    <TextBlock Grid.Column="0" Text="Type" />
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding VisualNodeTypes}" SelectedItem="{Binding VisualNodeType}" />
+                  </Grid>
+                  <Grid ColumnDefinitions="120,*">
+                    <TextBlock Grid.Column="0" Text="Next" />
+                    <TextBox Grid.Column="1" Text="{Binding VisualNodeNext}" />
+                  </Grid>
+                  <Grid ColumnDefinitions="120,*">
+                    <TextBlock Grid.Column="0" Text="True" />
+                    <TextBox Grid.Column="1" Text="{Binding VisualNodeTrueBranch}" />
+                  </Grid>
+                  <Grid ColumnDefinitions="120,*">
+                    <TextBlock Grid.Column="0" Text="False" />
+                    <TextBox Grid.Column="1" Text="{Binding VisualNodeFalseBranch}" />
+                  </Grid>
+                  <Grid ColumnDefinitions="120,*">
+                    <TextBlock Grid.Column="0" Text="Message" />
+                    <TextBox Grid.Column="1" Text="{Binding VisualNodeMessage}" />
+                  </Grid>
+                  <Border Background="#0c0c0f" BorderBrush="#2d2d35" BorderThickness="1" CornerRadius="4" Padding="8" MinHeight="140">
+                    <TextBox Text="{Binding VisualScriptPreview}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                             FontFamily="Consolas, monospace" Background="Transparent" BorderThickness="0" Foreground="#0dbd85" FontSize="11" />
+                  </Border>
+                </StackPanel>
+              </ScrollViewer>
+            </Grid>
+
+            <!-- Code script -->
+            <DockPanel IsVisible="{Binding IsCodeScriptDocument}">
+              <TextBlock DockPanel.Dock="Top" Text="{Binding CodeScriptFileName}" FontWeight="Bold" Margin="0,0,0,8" />
+              <TextBox Text="{Binding CodeScriptContent}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                       FontFamily="Consolas, monospace" FontSize="12" />
+            </DockPanel>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <!-- Inspector -->
+      <Border Grid.Column="2" Background="#16161a" BorderBrush="#2d2d35" BorderThickness="1,0,0,0" Padding="12">
+        <ScrollViewer>
+          <StackPanel Spacing="12">
+            <TextBlock Text="INSPECTOR" FontSize="10" FontWeight="Bold" Foreground="#9a9a9f" LetterSpacing="1" />
+            <TextBlock Text="{Binding InspectorTitle}" FontSize="16" FontWeight="Bold" />
+            <TextBlock Text="Quick properties for the active document." Foreground="#9a9a9f" FontSize="11" TextWrapping="Wrap" />
+
+            <StackPanel IsVisible="{Binding IsActorDocument}" Spacing="8">
+              <TextBlock Text="Actor" FontWeight="Bold" Foreground="#0dbd85" />
+              <TextBlock Text="{Binding ActorId}" />
+              <TextBlock><Run Text="HP: " /><Run Text="{Binding ActorMaxHp}" /></TextBlock>
+            </StackPanel>
+
+            <StackPanel IsVisible="{Binding IsSceneDocument}" Spacing="8">
+              <TextBlock Text="Scene" FontWeight="Bold" Foreground="#0dbd85" />
+              <TextBlock Text="{Binding SceneName}" />
+              <TextBlock Text="{Binding SceneGenerator}" FontSize="11" Foreground="#9a9a9f" />
+            </StackPanel>
+
+            <StackPanel IsVisible="{Binding IsVisualScriptDocument}" Spacing="8">
+              <TextBlock Text="Visual Script" FontWeight="Bold" Foreground="#0dbd85" />
+              <TextBlock Text="{Binding VisualGraphId}" />
+              <TextBlock><Run Text="Nodes: " /><Run Text="{Binding VisualNodeCount}" /></TextBlock>
+            </StackPanel>
+
+            <StackPanel IsVisible="{Binding IsCodeScriptDocument}" Spacing="8">
+              <TextBlock Text="C# Script" FontWeight="Bold" Foreground="#0dbd85" />
+              <TextBlock Text="Read-only in editor. Edit in your IDE." FontSize="11" Foreground="#9a9a9f" TextWrapping="Wrap" />
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+  </DockPanel>
+</Window>

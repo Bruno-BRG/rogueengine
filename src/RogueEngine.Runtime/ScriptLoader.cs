@@ -1,5 +1,6 @@
 using RogueEngine.Engine.Data;
 using RogueEngine.Engine.Scripting;
+using RogueEngine.Engine.VisualScripting;
 
 namespace RogueEngine.Runtime;
 
@@ -9,18 +10,22 @@ internal static class ScriptLoader
     {
         ArgumentNullException.ThrowIfNull(project);
 
-        if (!Directory.Exists(project.ScriptsDirectory))
+        var hasManualScripts = Directory.Exists(project.ScriptsDirectory) &&
+            Directory.GetFiles(project.ScriptsDirectory, "*.cs", SearchOption.TopDirectoryOnly).Length > 0;
+        var hasVisualScripts = project.VisualScripts.Count > 0;
+
+        if (!hasManualScripts && !hasVisualScripts)
         {
             return null;
         }
 
-        var scriptFiles = Directory.GetFiles(project.ScriptsDirectory, "*.cs", SearchOption.TopDirectoryOnly);
-        if (scriptFiles.Length == 0)
+        using var bundle = VisualScriptPipeline.CollectScriptFiles(project);
+        if (bundle.ScriptFiles.Count == 0)
         {
             return null;
         }
 
-        var result = ScriptCompiler.Compile(scriptFiles);
+        var result = ScriptCompiler.Compile(bundle.ScriptFiles);
         if (!result.Success)
         {
             System.Console.Error.WriteLine("Script compilation failed:");

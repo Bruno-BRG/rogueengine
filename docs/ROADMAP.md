@@ -2,9 +2,9 @@
 
 Living development plan for the **rogueengine** repository. Update this file as phases complete.
 
-**Current status:** `0.5 — Portable build` (CLI build tool, validate, publish, ZIP export)
+**Current status:** `0.7.1 — Editor shell & project hub` (launcher, resource tree, document tabs, scenes)
 
-**Last updated:** 2026-06-19
+**Last updated:** 2026-06-20
 
 ---
 
@@ -18,8 +18,9 @@ Living development plan for the **rogueengine** repository. Update this file as 
 | **0.3** | Data & project | `game.reproj`, JSON entities/items, save/load | Done |
 | **0.4** | C# scripting | Compiled scripts and custom behaviors | Done |
 | **0.5** | Portable build | Windows x64 portable export | Done |
-| **0.6** | Basic editor | Create, open, edit data, playtest, export | Not started |
-| **0.7** | Visual scripting MVP | Simple graphs compiled to C# | Not started |
+| **0.6** | Basic editor | Create, open, edit data, playtest, export | Done |
+| **0.7** | Visual scripting MVP | Simple graphs compiled to C# | Done |
+| **0.7.1** | Editor shell | Project hub, resource tree, scene tabs | In progress |
 | **0.8** | Roguelike depth | FOV, pathfinding, items/inventory | Not started |
 | **0.9** | World Toolkit | ProcGen lib, bitmask, overworld, generator picker | Not started |
 | **0.10** | Installer | MSI/EXE via WiX | Not started |
@@ -87,21 +88,41 @@ Living development plan for the **rogueengine** repository. Update this file as 
 
 ### Phase 6 — Editor (→ v0.6)
 
-- [ ] Avalonia desktop shell (`RogueEngine.Editor`)
-- [ ] Create / open project
-- [ ] Edit core data files (actors, items, settings)
-- [ ] Pick map generator + edit generator JSON
-- [ ] Playtest (launch runtime)
-- [ ] Trigger build tool from UI
+- [x] Avalonia desktop shell (`RogueEngine.Editor`)
+- [x] Create / open project
+- [x] Edit core data files (actors, settings)
+- [x] Pick map generator + edit generator JSON (stub: `rooms_corridors`)
+- [x] Playtest (launch runtime)
+- [x] Trigger build tool from UI
+
+**Module:** `RogueEngine.Editor`
 
 ---
 
 ### Phase 7 — Visual scripting (→ v0.7)
 
-- [ ] Minimal graph editor
-- [ ] Node types: event, condition, action, log, spawn, open door
-- [ ] Graph JSON → generated C#
-- [ ] Compile generated code in build pipeline
+- [x] Minimal graph editor (linear node list in editor tab)
+- [x] Node types: event, condition, action, log, spawn, open door (MVP: OnTurn, IsPlayerAdjacent, HasHpBelow, MoveTowardPlayer, AttackAtPlayer, Log)
+- [x] Graph JSON → generated C#
+- [x] Compile generated code in build pipeline
+
+**Modules:** `RogueEngine.Engine.VisualScripting`, `RogueEngine.Editor` (Visual Scripts tab)
+
+---
+
+### Phase 6b — Editor shell & project hub (→ v0.7.1)
+
+- [x] Project launcher (recent projects, create, open)
+- [x] Editor shell: resource tree, document tabs, inspector, console
+- [x] Scene definitions (`Data/scenes/*.scene.json`)
+- [x] Scripts listed in resource tree
+- [ ] Map viewport / tile painter (Phase E2)
+- [ ] Closable document tabs
+- [ ] Dockable panels (Godot-style)
+
+**Spec:** [`docs/planning/EDITOR_VISION.md`](planning/EDITOR_VISION.md)
+
+**Module:** `RogueEngine.Editor`
 
 ---
 

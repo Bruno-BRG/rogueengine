@@ -1,0 +1,68 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RogueEngine.Editor.ViewModels"
+        x:Class="RogueEngine.Editor.Views.ProjectLauncherWindow"
+        x:DataType="vm:ProjectLauncherViewModel"
+        Title="RogueEngine"
+        Width="960"
+        Height="640"
+        MinWidth="800"
+        MinHeight="560"
+        Background="#111114"
+        Foreground="#e3e3e6"
+        WindowStartupLocation="CenterScreen">
+
+  <Grid ColumnDefinitions="*,380">
+    <!-- Hero panel -->
+    <Border Grid.Column="0" Padding="48">
+      <StackPanel VerticalAlignment="Center" Spacing="24" MaxWidth="480">
+        <StackPanel Spacing="8">
+          <TextBlock Text="RogueEngine" FontSize="42" FontWeight="Bold" Foreground="#ffffff" />
+          <TextBlock Text="2D tile-based roguelike engine" FontSize="16" Foreground="#9a9a9f" />
+          <TextBlock Text="Create dungeon crawlers with scenes, entities, C# scripts, and visual behaviors — inspired by the best game IDEs." FontSize="13" Foreground="#7a7a80" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="12">
+          <Button Classes="primary" Content="✨ Create New Project" Command="{Binding CreateProjectCommand}" />
+          <Button Content="📂 Open Project" Command="{Binding OpenProjectCommand}" Padding="16,10" />
+        </StackPanel>
+
+        <Border IsVisible="{Binding MostRecentProject, Converter={x:Static ObjectConverters.IsNotNull}}"
+                Background="#1c1c21" BorderBrush="#2d2d35" BorderThickness="1" CornerRadius="8" Padding="16">
+          <StackPanel Spacing="10">
+            <TextBlock Text="CONTINUE WHERE YOU LEFT OFF" FontSize="10" FontWeight="Bold" Foreground="#9a9a9f" LetterSpacing="1" />
+            <TextBlock Text="{Binding MostRecentProject.Name}" FontSize="18" FontWeight="Bold" Foreground="#0dbd85" />
+            <TextBlock Text="{Binding MostRecentProject.ReprojPath}" FontSize="11" Foreground="#7a7a80" TextWrapping="Wrap" />
+            <TextBlock FontSize="11" Foreground="#9a9a9f">
+              <Run Text="Last opened: " />
+              <Run Text="{Binding MostRecentProject.LastOpenedDisplay}" />
+            </TextBlock>
+            <Button Classes="primary" Content="▶ Open Recent Project" Command="{Binding OpenMostRecentProjectCommand}" HorizontalAlignment="Left" />
+          </StackPanel>
+        </Border>
+
+        <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="#9a9a9f" />
+      </StackPanel>
+    </Border>
+
+    <!-- Recent projects sidebar -->
+    <Border Grid.Column="1" Background="#16161a" BorderBrush="#2d2d35" BorderThickness="1,0,0,0" Padding="24">
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Text="RECENT PROJECTS" FontSize="11" FontWeight="Bold" Foreground="#9a9a9f" Margin="0,0,0,12" LetterSpacing="1" />
+        <Button DockPanel.Dock="Bottom" Content="Open Selected" Command="{Binding OpenRecentProjectCommand}" HorizontalAlignment="Stretch" Margin="0,12,0,0" Classes="primary" />
+
+        <ListBox ItemsSource="{Binding RecentProjects}" SelectedItem="{Binding SelectedRecentProject}">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Spacing="4">
+                <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                <TextBlock Text="{Binding ReprojPath}" FontSize="10" Foreground="#7a7a80" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding LastOpenedDisplay}" FontSize="10" Foreground="#9a9a9f" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </DockPanel>
+    </Border>
+  </Grid>
+</Window>

@@ -2,7 +2,7 @@
 
 A specialized 2D tile-based roguelike engine in C#. RogueEngine is not a general-purpose game engine like Unity or Godot — it focuses on a narrower domain: grid maps, entities, turn-based gameplay, procedural generation, field of view, pathfinding, gameplay scripts, and exporting finished games as executables or installers.
 
-**Status:** v0.5 — portable build via CLI. World Toolkit (multi-algorithm procgen, bitmask, overworld) planned for v0.9.
+**Status:** v0.7 — visual scripting MVP (graph JSON → C# → Roslyn compile). World Toolkit planned for v0.9.
 
 ## What is this?
 
@@ -74,11 +74,11 @@ MyGame/
   Build/
 ```
 
-The starter template in `templates/BasicRoguelikeProject/` will be added in Phase 3.
+The starter template lives in `templates/BasicRoguelikeProject/`.
 
 ## Roadmap
 
-**Current version:** 0.0 (planning)
+**Current version:** 0.7 (visual scripting MVP)
 
 Full version milestones, implementation phases, MVP criteria, and technical backlog: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**
 
@@ -87,7 +87,10 @@ Full version milestones, implementation phases, MVP criteria, and technical back
 | 0.1 | Minimal runtime |
 | 0.2 | Minimal roguelike |
 | 0.3 | Data & `game.reproj` |
-| 0.4–0.7 | Scripting, build, editor, visual scripts |
+| 0.4–0.5 | Scripting & portable build |
+| 0.6 | Basic editor |
+| 0.7 | Visual scripting MVP |
+| 0.8–0.10 | FOV, World Toolkit, installer |
 | 1.0 | Initial release |
 
 ## Documentation
@@ -105,6 +108,7 @@ Full version milestones, implementation phases, MVP criteria, and technical back
 ```bash
 dotnet build
 dotnet test
+dotnet run --project src/RogueEngine.Editor
 dotnet run --project src/RogueEngine.Runtime -- templates/BasicRoguelikeProject/game.reproj
 dotnet run --project src/RogueEngine.BuildTool -- build templates/BasicRoguelikeProject/game.reproj
 ```

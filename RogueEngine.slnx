@@ -1,12 +1,14 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/RogueEngine.BuildTool/RogueEngine.BuildTool.csproj" />
+    <Project Path="src/RogueEngine.Editor/RogueEngine.Editor.csproj" />
     <Project Path="src/RogueEngine.Engine/RogueEngine.Engine.csproj" />
     <Project Path="src/RogueEngine.Runtime/RogueEngine.Runtime.csproj" />
     <Project Path="src/RogueEngine.SadConsole/RogueEngine.SadConsole.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/RogueEngine.BuildTool.Tests/RogueEngine.BuildTool.Tests.csproj" />
+    <Project Path="tests/RogueEngine.Editor.Tests/RogueEngine.Editor.Tests.csproj" />
     <Project Path="tests/RogueEngine.Engine.Tests/RogueEngine.Engine.Tests.csproj" />
   </Folder>
 </Solution>

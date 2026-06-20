@@ -1,0 +1,10 @@
+{
+  "id": "goblin_visual",
+  "glyph": "o",
+  "color": { "r": 180, "g": 80, "b": 80 },
+  "maxHp": 6,
+  "isPlayer": false,
+  "blocksMovement": true,
+  "hasChaseAI": false,
+  "behavior": "goblin_basic"
+}

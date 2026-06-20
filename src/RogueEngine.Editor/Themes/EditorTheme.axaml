@@ -1,0 +1,120 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Style Selector="Button">
+    <Setter Property="Background" Value="#232329"/>
+    <Setter Property="Foreground" Value="#e3e3e6"/>
+    <Setter Property="BorderBrush" Value="#2d2d35"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="4"/>
+    <Setter Property="Padding" Value="12,6"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+  </Style>
+  <Style Selector="Button:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#2d2d35"/>
+    <Setter Property="BorderBrush" Value="#3d3d45"/>
+    <Setter Property="Foreground" Value="#ffffff"/>
+  </Style>
+
+  <Style Selector="Button.primary">
+    <Setter Property="Background" Value="#0dbd85"/>
+    <Setter Property="Foreground" Value="#ffffff"/>
+    <Setter Property="BorderBrush" Value="#0dbd85"/>
+    <Setter Property="Padding" Value="16,10"/>
+  </Style>
+  <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#0fb37a"/>
+    <Setter Property="BorderBrush" Value="#0fb37a"/>
+  </Style>
+
+  <Style Selector="Button.playtest">
+    <Setter Property="Background" Value="#0dbd85"/>
+    <Setter Property="Foreground" Value="#ffffff"/>
+    <Setter Property="BorderBrush" Value="#0dbd85"/>
+  </Style>
+  <Style Selector="Button.playtest:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#0fb37a"/>
+    <Setter Property="BorderBrush" Value="#0fb37a"/>
+  </Style>
+
+  <Style Selector="Button.build">
+    <Setter Property="Background" Value="#e05300"/>
+    <Setter Property="Foreground" Value="#ffffff"/>
+    <Setter Property="BorderBrush" Value="#e05300"/>
+  </Style>
+  <Style Selector="Button.build:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#c74900"/>
+    <Setter Property="BorderBrush" Value="#c74900"/>
+  </Style>
+
+  <Style Selector="Button.doc-tab">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0,0,0,2"/>
+    <Setter Property="BorderBrush" Value="Transparent"/>
+    <Setter Property="CornerRadius" Value="0"/>
+    <Setter Property="Padding" Value="14,8"/>
+    <Setter Property="Foreground" Value="#9a9a9f"/>
+  </Style>
+  <Style Selector="Button.doc-tab.active">
+    <Setter Property="Foreground" Value="#0dbd85"/>
+    <Setter Property="BorderBrush" Value="#0dbd85"/>
+    <Setter Property="Background" Value="#1a1a20"/>
+  </Style>
+
+  <Style Selector="TextBox">
+    <Setter Property="Background" Value="#232329"/>
+    <Setter Property="BorderBrush" Value="#2d2d35"/>
+    <Setter Property="Foreground" Value="#e3e3e6"/>
+    <Setter Property="CornerRadius" Value="4"/>
+    <Setter Property="Padding" Value="8,6"/>
+    <Setter Property="SelectionBrush" Value="#0dbd85"/>
+  </Style>
+  <Style Selector="TextBox:focus /template/ Border">
+    <Setter Property="BorderBrush" Value="#0dbd85"/>
+  </Style>
+
+  <Style Selector="NumericUpDown">
+    <Setter Property="Background" Value="#232329"/>
+    <Setter Property="BorderBrush" Value="#2d2d35"/>
+    <Setter Property="Foreground" Value="#e3e3e6"/>
+    <Setter Property="CornerRadius" Value="4"/>
+  </Style>
+
+  <Style Selector="ComboBox">
+    <Setter Property="Background" Value="#232329"/>
+    <Setter Property="BorderBrush" Value="#2d2d35"/>
+    <Setter Property="Foreground" Value="#e3e3e6"/>
+    <Setter Property="CornerRadius" Value="4"/>
+    <Setter Property="Padding" Value="8,6"/>
+  </Style>
+
+  <Style Selector="ListBox">
+    <Setter Property="Background" Value="#1c1c21"/>
+    <Setter Property="BorderBrush" Value="#2d2d35"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="4"/>
+  </Style>
+  <Style Selector="ListBoxItem">
+    <Setter Property="Padding" Value="10,8"/>
+    <Setter Property="CornerRadius" Value="4"/>
+  </Style>
+  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#2d2d35"/>
+  </Style>
+  <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+    <Setter Property="Background" Value="#32323d"/>
+    <Setter Property="Foreground" Value="#0dbd85"/>
+  </Style>
+
+  <Style Selector="TreeView">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+  </Style>
+  <Style Selector="TreeViewItem">
+    <Setter Property="Padding" Value="4,2"/>
+  </Style>
+
+  <Style Selector="CheckBox">
+    <Setter Property="Foreground" Value="#e3e3e6"/>
+  </Style>
+</Styles>

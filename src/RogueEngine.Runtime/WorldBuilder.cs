@@ -13,10 +13,10 @@ internal static class WorldBuilder
     {
         ArgumentNullException.ThrowIfNull(project);
 
-        var gameSeed = seed ?? Random.Shared.Next();
+        var mapSize = ResolveMapSize(project);
+        var gameSeed = seed ?? project.Generator?.Seed ?? Random.Shared.Next();
         var random = new Random(gameSeed);
-        var generator = new DungeonGenerator();
-        var generation = generator.Generate(project.Settings.MapWidth, project.Settings.MapHeight, random);
+        var generation = GenerateMap(project, mapSize.Width, mapSize.Height, random);
         var world = new World(generation.Map);
         var turnManager = new TurnManager();
 
@@ -53,9 +53,9 @@ internal static class WorldBuilder
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(saveData);
 
+        var mapSize = ResolveMapSize(project);
         var random = new Random(saveData.Seed);
-        var generator = new DungeonGenerator();
-        var generation = generator.Generate(project.Settings.MapWidth, project.Settings.MapHeight, random);
+        var generation = GenerateMap(project, mapSize.Width, mapSize.Height, random);
         var world = new World(generation.Map);
         var turnManager = new TurnManager();
         Entity? player = null;
@@ -142,6 +142,29 @@ internal static class WorldBuilder
 
         world.AddEntity(entity);
         return entity;
+    }
+
+    private static (int Width, int Height) ResolveMapSize(LoadedProject project)
+    {
+        if (project.Generator is not null)
+        {
+            return (project.Generator.Width, project.Generator.Height);
+        }
+
+        return (project.Settings.MapWidth, project.Settings.MapHeight);
+    }
+
+    private static DungeonGenerationResult GenerateMap(LoadedProject project, int width, int height, Random random)
+    {
+        var algorithm = project.Generator?.Algorithm ?? "rooms_corridors";
+        if (!string.Equals(algorithm, "rooms_corridors", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new NotSupportedException(
+                $"Map generator algorithm '{algorithm}' is not supported yet. Use 'rooms_corridors'.");
+        }
+
+        var generator = new DungeonGenerator();
+        return generator.Generate(width, height, random);
     }
 }
 

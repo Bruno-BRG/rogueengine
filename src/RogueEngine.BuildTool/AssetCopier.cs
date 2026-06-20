@@ -27,6 +27,12 @@ public static class AssetCopier
         {
             CopyDirectory(scriptsDirectory, Path.Combine(outputDirectory, "Scripts"));
         }
+
+        var visualScriptsDirectory = Path.Combine(projectRoot, "VisualScripts");
+        if (Directory.Exists(visualScriptsDirectory))
+        {
+            CopyDirectory(visualScriptsDirectory, Path.Combine(outputDirectory, "VisualScripts"));
+        }
     }
 
     private static void CopyDirectory(string sourceDirectory, string destinationDirectory)
