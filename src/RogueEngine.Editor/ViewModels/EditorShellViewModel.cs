@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,7 +7,9 @@ using CommunityToolkit.Mvvm.Input;
 using RogueEngine.Editor.Models;
 using RogueEngine.Editor.Services;
 using RogueEngine.Editor.Views;
+using RogueEngine.Engine.Core;
 using RogueEngine.Engine.VisualScripting;
+using RogueEngine.Toolkit.ProcGen;
 
 namespace RogueEngine.Editor.ViewModels;
 
@@ -19,11 +22,13 @@ public partial class EditorShellViewModel : ViewModelBase
     private readonly BuildService _buildService = new();
     private readonly VisualScriptService _visualScriptService = new();
     private readonly ResourceTreeService _resourceTreeService = new();
+    private readonly MapPreviewService _mapPreviewService = new();
     private readonly OutputLogViewModel _outputLog = new();
     private readonly EditorLogSink _buildLogSink;
 
     private EditorProject? _project;
     private EditorActor? _selectedActor;
+    private EditorItem? _selectedItem;
     private EditorScene? _selectedScene;
     private EditorVisualGraph? _selectedVisualGraph;
     private EditorGraphNode? _selectedVisualNode;
@@ -34,14 +39,18 @@ public partial class EditorShellViewModel : ViewModelBase
         _navigation = navigation;
         _buildLogSink = new EditorLogSink(_outputLog);
         _outputLog.Changed += () => OnPropertyChanged(nameof(OutputText));
+        _playtestService.RunningStateChanged += OnPlaytestRunningStateChanged;
 
         Actors = new ObservableCollection<EditorActor>();
+        Items = new ObservableCollection<EditorItem>();
         Scenes = new ObservableCollection<EditorScene>();
         VisualGraphs = new ObservableCollection<EditorVisualGraph>();
         VisualNodes = new ObservableCollection<EditorGraphNode>();
         ResourceTree = new ObservableCollection<EditorResourceNode>();
         OpenDocuments = new ObservableCollection<EditorDocumentTab>();
-        GeneratorAlgorithms = ["rooms_corridors"];
+        GeneratorAlgorithms = new ObservableCollection<string>(GeneratorRegistry.List());
+        OverworldCells = new ObservableCollection<EditorOverworldCell>();
+        OverworldConnections = new ObservableCollection<EditorOverworldConnection>();
         VisualNodeTypes =
         [
             NodeType.OnTurn,
@@ -66,12 +75,15 @@ public partial class EditorShellViewModel : ViewModelBase
     }
 
     public ObservableCollection<EditorActor> Actors { get; }
+    public ObservableCollection<EditorItem> Items { get; }
     public ObservableCollection<EditorScene> Scenes { get; }
     public ObservableCollection<EditorVisualGraph> VisualGraphs { get; }
     public ObservableCollection<EditorGraphNode> VisualNodes { get; }
     public ObservableCollection<EditorResourceNode> ResourceTree { get; }
     public ObservableCollection<EditorDocumentTab> OpenDocuments { get; }
-    public IReadOnlyList<string> GeneratorAlgorithms { get; }
+    public ObservableCollection<string> GeneratorAlgorithms { get; }
+    public ObservableCollection<EditorOverworldCell> OverworldCells { get; }
+    public ObservableCollection<EditorOverworldConnection> OverworldConnections { get; }
     public IReadOnlyList<string> VisualNodeTypes { get; }
     public OutputLogViewModel OutputLog => _outputLog;
     public string OutputText => _outputLog.Text;
@@ -99,11 +111,34 @@ public partial class EditorShellViewModel : ViewModelBase
     [ObservableProperty] private bool _actorBlocksMovement;
     [ObservableProperty] private bool _actorHasChaseAI;
     [ObservableProperty] private string _actorBehavior = string.Empty;
+    [ObservableProperty] private string _itemId = string.Empty;
+    [ObservableProperty] private string _itemName = string.Empty;
+    [ObservableProperty] private string _itemGlyph = "!";
+    [ObservableProperty] private int _itemColorR = 200;
+    [ObservableProperty] private int _itemColorG = 50;
+    [ObservableProperty] private int _itemColorB = 50;
+    [ObservableProperty] private string _itemKind = "consumable";
+    [ObservableProperty] private int _itemMaxStack = 1;
+    [ObservableProperty] private string _itemEquipSlot = string.Empty;
+    [ObservableProperty] private int _itemHealOnUse;
+    [ObservableProperty] private string _overworldId = string.Empty;
+    [ObservableProperty] private int _genFillPercent = 45;
+    [ObservableProperty] private int _genSmoothPasses = 5;
+    [ObservableProperty] private int _genWallThreshold = 4;
+    [ObservableProperty] private int _genTargetFloorCount = 1200;
+    [ObservableProperty] private int _genWalkerCount = 4;
+    [ObservableProperty] private int _genMinRoomSize = 4;
+    [ObservableProperty] private int _genMaxRoomSize = 10;
+    [ObservableProperty] private int _genSplitDepth = 4;
+    [ObservableProperty] private string _genTilesetPath = string.Empty;
     [ObservableProperty] private string _sceneId = string.Empty;
     [ObservableProperty] private string _sceneName = string.Empty;
     [ObservableProperty] private string _sceneGenerator = string.Empty;
     [ObservableProperty] private int _sceneWidth = 80;
     [ObservableProperty] private int _sceneHeight = 22;
+    [ObservableProperty] private int _sceneSeed;
+    [ObservableProperty] private TileMap? _scenePreviewMap;
+    [ObservableProperty] private bool _isPlaytestRunning;
     [ObservableProperty] private string _codeScriptContent = string.Empty;
     [ObservableProperty] private string _codeScriptFileName = string.Empty;
     [ObservableProperty] private string _visualGraphId = string.Empty;
@@ -124,6 +159,8 @@ public partial class EditorShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsActorDocument));
         OnPropertyChanged(nameof(IsSceneDocument));
         OnPropertyChanged(nameof(IsGeneratorDocument));
+        OnPropertyChanged(nameof(IsItemDocument));
+        OnPropertyChanged(nameof(IsOverworldDocument));
         OnPropertyChanged(nameof(IsVisualScriptDocument));
         OnPropertyChanged(nameof(IsCodeScriptDocument));
         OnPropertyChanged(nameof(IsWelcomeDocument));
@@ -140,12 +177,22 @@ public partial class EditorShellViewModel : ViewModelBase
     public bool IsActorDocument => ActiveDocumentKind == EditorDocumentKind.Actor;
     public bool IsSceneDocument => ActiveDocumentKind == EditorDocumentKind.Scene;
     public bool IsGeneratorDocument => ActiveDocumentKind == EditorDocumentKind.Generator;
+    public bool IsItemDocument => ActiveDocumentKind == EditorDocumentKind.Item;
+    public bool IsOverworldDocument => ActiveDocumentKind == EditorDocumentKind.Overworld;
     public bool IsVisualScriptDocument => ActiveDocumentKind == EditorDocumentKind.VisualScript;
     public bool IsCodeScriptDocument => ActiveDocumentKind == EditorDocumentKind.CodeScript;
 
     public string InspectorTitle => SelectedDocument?.Title ?? "No document open";
 
     public int VisualNodeCount => VisualNodes.Count;
+
+    public int SceneEntityCount => SelectedScene?.Entities.Count ?? 0;
+
+    public int SceneItemCount => SelectedScene?.ItemPlacements.Count ?? 0;
+
+    public bool CanPlaytest() => HasProject && !IsPlaytestRunning;
+
+    public bool CanStopPlaytest() => IsPlaytestRunning;
 
     public EditorActor? SelectedActor
     {
@@ -155,6 +202,18 @@ public partial class EditorShellViewModel : ViewModelBase
             if (SetProperty(ref _selectedActor, value))
             {
                 LoadSelectedActorIntoForm();
+            }
+        }
+    }
+
+    public EditorItem? SelectedItem
+    {
+        get => _selectedItem;
+        set
+        {
+            if (SetProperty(ref _selectedItem, value))
+            {
+                LoadSelectedItemIntoForm();
             }
         }
     }
@@ -198,7 +257,11 @@ public partial class EditorShellViewModel : ViewModelBase
     public bool HasProject => _project is not null;
 
     [RelayCommand]
-    private void ReturnToLauncher() => _navigation.ShowLauncher();
+    private void ReturnToLauncher()
+    {
+        _playtestService.Stop();
+        _navigation.ShowLauncher();
+    }
 
     [RelayCommand]
     private void OpenResource(EditorResourceNode? node)
@@ -211,22 +274,30 @@ public partial class EditorShellViewModel : ViewModelBase
         switch (node.Kind)
         {
             case EditorResourceKind.ProjectSettings:
-                OpenDocument(EditorDocumentKind.ProjectSettings, "settings", "Project Settings", "⚙");
+                OpenDocument(EditorDocumentKind.ProjectSettings, "settings", "Project Settings", "[.]");
                 break;
             case EditorResourceKind.Scene when node.Payload is not null:
                 SelectedScene = Scenes.FirstOrDefault(scene => scene.Id == node.Payload);
-                OpenDocument(EditorDocumentKind.Scene, node.Payload, SelectedScene?.Name ?? node.Payload, "🗺");
+                OpenDocument(EditorDocumentKind.Scene, node.Payload, SelectedScene?.Name ?? node.Payload, "[S]");
                 break;
             case EditorResourceKind.Actor when node.Payload is not null:
                 SelectedActor = Actors.FirstOrDefault(actor => actor.Id == node.Payload);
                 OpenDocument(EditorDocumentKind.Actor, node.Payload, node.Payload, node.Icon);
                 break;
+            case EditorResourceKind.Item when node.Payload is not null:
+                SelectedItem = Items.FirstOrDefault(item => item.Id == node.Payload);
+                OpenDocument(EditorDocumentKind.Item, node.Payload, SelectedItem?.Name ?? node.Payload, node.Icon);
+                break;
+            case EditorResourceKind.Overworld:
+                OpenDocument(EditorDocumentKind.Overworld, "overworld", _project?.Overworld?.Id ?? "Overworld", "[W]");
+                LoadOverworldIntoForm();
+                break;
             case EditorResourceKind.Generator:
-                OpenDocument(EditorDocumentKind.Generator, "generator", GeneratorId, "🗺");
+                OpenDocument(EditorDocumentKind.Generator, "generator", GeneratorId, "[G]");
                 break;
             case EditorResourceKind.VisualScript when node.Payload is not null:
                 SelectedVisualGraph = VisualGraphs.FirstOrDefault(graph => graph.Id == node.Payload);
-                OpenDocument(EditorDocumentKind.VisualScript, node.Payload, node.Payload, "🧠");
+                OpenDocument(EditorDocumentKind.VisualScript, node.Payload, node.Payload, "[V]");
                 break;
             case EditorResourceKind.CodeScript when node.Payload is not null:
                 _selectedScript = _project?.ScriptFiles.FirstOrDefault(script => script.FullPath == node.Payload);
@@ -323,7 +394,7 @@ public partial class EditorShellViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand(CanExecute = nameof(HasProject))]
+    [RelayCommand(CanExecute = nameof(CanPlaytest))]
     private void Playtest()
     {
         if (_project is null) return;
@@ -339,13 +410,56 @@ public partial class EditorShellViewModel : ViewModelBase
         try
         {
             _playtestService.Start(_project.ReprojPath);
-            _outputLog.AddInfo("Playtest started (F5).");
-            StatusText = "Playtest running.";
+            _outputLog.AddInfo("Playtest started.");
+            StatusText = "Running…";
         }
         catch (Exception ex)
         {
             _outputLog.AddError(ex.Message);
             StatusText = "Playtest failed to start.";
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanStopPlaytest))]
+    private void StopPlaytest()
+    {
+        _playtestService.Stop();
+        _outputLog.AddInfo("Playtest stopped.");
+        StatusText = "Ready";
+    }
+
+    public void OnSceneViewportChanged()
+    {
+        MarkDirty();
+        OnPropertyChanged(nameof(SceneEntityCount));
+        OnPropertyChanged(nameof(SceneItemCount));
+    }
+
+    public void RefreshSceneMapPreview() => RefreshScenePreview();
+
+    [RelayCommand]
+    private void RegenerateScenePreview()
+    {
+        if (SelectedScene is null || _project is null)
+        {
+            return;
+        }
+
+        var result = _mapPreviewService.Generate(SelectedScene, _project.Generator, Random.Shared.Next());
+        SelectedScene.Seed = result.Seed;
+        SceneSeed = result.Seed;
+        ScenePreviewMap = result.Map;
+        MarkDirty();
+    }
+
+    private void OnPlaytestRunningStateChanged()
+    {
+        IsPlaytestRunning = _playtestService.IsRunning;
+        PlaytestCommand.NotifyCanExecuteChanged();
+        StopPlaytestCommand.NotifyCanExecuteChanged();
+        if (!IsPlaytestRunning && StatusText == "Running…")
+        {
+            StatusText = "Ready";
         }
     }
 
@@ -371,6 +485,78 @@ public partial class EditorShellViewModel : ViewModelBase
             StatusText = "Build succeeded.";
         }
         else StatusText = "Build failed.";
+    }
+
+    [RelayCommand(CanExecute = nameof(HasProject))]
+    private void AddItem()
+    {
+        if (_project is null) return;
+        var item = new EditorItem
+        {
+            Id = $"item{Items.Count + 1}",
+            SourceFileName = $"item{Items.Count + 1}.json",
+            Name = $"Item {Items.Count + 1}",
+            Glyph = '!',
+            ColorR = 200,
+            ColorG = 50,
+            ColorB = 50,
+            Kind = "consumable",
+            MaxStack = 5,
+            HealOnUse = 5
+        };
+        Items.Add(item);
+        _project.Items = Items.ToList();
+        RebuildResourceTree();
+        SelectedItem = item;
+        OpenDocument(EditorDocumentKind.Item, item.Id, item.Name, item.Glyph.ToString());
+        MarkDirty();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasProject))]
+    private void RemoveItem()
+    {
+        if (_project is null || SelectedItem is null) return;
+        var index = Items.IndexOf(SelectedItem);
+        if (index < 0) return;
+        var itemId = SelectedItem.Id;
+        Items.RemoveAt(index);
+        _project.Items = Items.ToList();
+        CloseDocumentsForResource(itemId);
+        RebuildResourceTree();
+        SelectedItem = Items.Count > 0 ? Items[Math.Min(index, Items.Count - 1)] : null;
+        MarkDirty();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasProject))]
+    private void AddOverworldCell()
+    {
+        if (_project?.Overworld is null) return;
+        var cell = new EditorOverworldCell
+        {
+            Id = $"cell{_project.Overworld.Cells.Count + 1}",
+            X = _project.Overworld.Cells.Count,
+            Y = 0,
+            Biome = "cave",
+            LocalGenerator = _project.DefaultGeneratorPath
+        };
+        _project.Overworld.Cells.Add(cell);
+        OverworldCells.Add(cell);
+        MarkDirty();
+    }
+
+    [RelayCommand(CanExecute = nameof(HasProject))]
+    private void AddOverworldConnection()
+    {
+        if (_project?.Overworld is null || _project.Overworld.Cells.Count < 2) return;
+        var connection = new EditorOverworldConnection
+        {
+            From = _project.Overworld.Cells[0].Id,
+            To = _project.Overworld.Cells[1].Id,
+            Type = "road"
+        };
+        _project.Overworld.Connections.Add(connection);
+        OverworldConnections.Add(connection);
+        MarkDirty();
     }
 
     [RelayCommand(CanExecute = nameof(HasProject))]
@@ -425,7 +611,7 @@ public partial class EditorShellViewModel : ViewModelBase
         _project.Scenes = Scenes.ToList();
         RebuildResourceTree();
         SelectedScene = scene;
-        OpenDocument(EditorDocumentKind.Scene, scene.Id, scene.Name, "🗺");
+        OpenDocument(EditorDocumentKind.Scene, scene.Id, scene.Name, "[S]");
         MarkDirty();
     }
 
@@ -448,7 +634,7 @@ public partial class EditorShellViewModel : ViewModelBase
         _project.VisualGraphs = VisualGraphs.ToList();
         RebuildResourceTree();
         SelectedVisualGraph = graph;
-        OpenDocument(EditorDocumentKind.VisualScript, graph.Id, graph.Id, "🧠");
+        OpenDocument(EditorDocumentKind.VisualScript, graph.Id, graph.Id, "[V]");
         MarkDirty();
     }
 
@@ -531,11 +717,49 @@ public partial class EditorShellViewModel : ViewModelBase
     partial void OnActorBlocksMovementChanged(bool value) => ApplyActorFormToSelection();
     partial void OnActorHasChaseAIChanged(bool value) => ApplyActorFormToSelection();
     partial void OnActorBehaviorChanged(string value) => ApplyActorFormToSelection();
+    partial void OnItemIdChanged(string value) => ApplyItemFormToSelection();
+    partial void OnItemNameChanged(string value) => ApplyItemFormToSelection();
+    partial void OnItemGlyphChanged(string value) => ApplyItemFormToSelection();
+    partial void OnItemColorRChanged(int value) => ApplyItemFormToSelection();
+    partial void OnItemColorGChanged(int value) => ApplyItemFormToSelection();
+    partial void OnItemColorBChanged(int value) => ApplyItemFormToSelection();
+    partial void OnItemKindChanged(string value) => ApplyItemFormToSelection();
+    partial void OnItemMaxStackChanged(int value) => ApplyItemFormToSelection();
+    partial void OnItemEquipSlotChanged(string value) => ApplyItemFormToSelection();
+    partial void OnItemHealOnUseChanged(int value) => ApplyItemFormToSelection();
+    partial void OnOverworldIdChanged(string value) => ApplyOverworldFormToProject();
+    partial void OnGenFillPercentChanged(int value) => ApplyGeneratorParametersToProject();
+    partial void OnGenSmoothPassesChanged(int value) => ApplyGeneratorParametersToProject();
+    partial void OnGenWallThresholdChanged(int value) => ApplyGeneratorParametersToProject();
+    partial void OnGenTargetFloorCountChanged(int value) => ApplyGeneratorParametersToProject();
+    partial void OnGenWalkerCountChanged(int value) => ApplyGeneratorParametersToProject();
+    partial void OnGenMinRoomSizeChanged(int value) => ApplyGeneratorParametersToProject();
+    partial void OnGenMaxRoomSizeChanged(int value) => ApplyGeneratorParametersToProject();
+    partial void OnGenSplitDepthChanged(int value) => ApplyGeneratorParametersToProject();
+    partial void OnGenTilesetPathChanged(string value) => ApplyGeneratorParametersToProject();
     partial void OnSceneIdChanged(string value) => ApplySceneFormToSelection();
     partial void OnSceneNameChanged(string value) => ApplySceneFormToSelection();
     partial void OnSceneGeneratorChanged(string value) => ApplySceneFormToSelection();
-    partial void OnSceneWidthChanged(int value) => ApplySceneFormToSelection();
-    partial void OnSceneHeightChanged(int value) => ApplySceneFormToSelection();
+    partial void OnSceneWidthChanged(int value)
+    {
+        ApplySceneFormToSelection();
+        RefreshScenePreview();
+    }
+
+    partial void OnSceneHeightChanged(int value)
+    {
+        ApplySceneFormToSelection();
+        RefreshScenePreview();
+    }
+
+    partial void OnSceneSeedChanged(int value)
+    {
+        if (SelectedScene is not null)
+        {
+            SelectedScene.Seed = value;
+            MarkDirty();
+        }
+    }
     partial void OnVisualGraphIdChanged(string value) => ApplyVisualGraphFormToSelection();
     partial void OnVisualGraphEntryNodeIdChanged(string value) => ApplyVisualGraphFormToSelection();
     partial void OnVisualNodeIdChanged(string value) => ApplyVisualNodeFormToSelection();
@@ -552,6 +776,7 @@ public partial class EditorShellViewModel : ViewModelBase
         {
             case "add-actor": AddActor(); break;
             case "add-scene": AddScene(); break;
+            case "add-item": AddItem(); break;
             case "add-visual": AddVisualGraph(); break;
         }
     }
@@ -563,7 +788,7 @@ public partial class EditorShellViewModel : ViewModelBase
             TabKey = "welcome",
             Kind = EditorDocumentKind.Welcome,
             Title = "Welcome",
-            Icon = "🏠"
+            Icon = "—"
         };
         OpenDocuments.Add(tab);
         SelectedDocument = tab;
@@ -599,6 +824,12 @@ public partial class EditorShellViewModel : ViewModelBase
         {
             case EditorDocumentKind.Actor:
                 SelectedActor = Actors.FirstOrDefault(actor => actor.Id == tab.ResourceId);
+                break;
+            case EditorDocumentKind.Item:
+                SelectedItem = Items.FirstOrDefault(item => item.Id == tab.ResourceId);
+                break;
+            case EditorDocumentKind.Overworld:
+                LoadOverworldIntoForm();
                 break;
             case EditorDocumentKind.Scene:
                 SelectedScene = Scenes.FirstOrDefault(scene => scene.Id == tab.ResourceId);
@@ -645,10 +876,15 @@ public partial class EditorShellViewModel : ViewModelBase
         GeneratorWidth = project.Generator.Width;
         GeneratorHeight = project.Generator.Height;
         GeneratorSeedText = project.Generator.Seed?.ToString() ?? string.Empty;
+        LoadGeneratorParametersFromProject(project.Generator);
 
         Actors.Clear();
         foreach (var actor in project.Actors) Actors.Add(actor);
         SelectedActor = Actors.FirstOrDefault();
+
+        Items.Clear();
+        foreach (var item in project.Items) Items.Add(item);
+        SelectedItem = Items.FirstOrDefault();
 
         Scenes.Clear();
         foreach (var scene in project.Scenes) Scenes.Add(scene);
@@ -670,9 +906,12 @@ public partial class EditorShellViewModel : ViewModelBase
     {
         if (_project is null) return;
         ApplyActorFormToSelection();
+        ApplyItemFormToSelection();
         ApplySceneFormToSelection();
         ApplyVisualGraphFormToSelection();
         ApplyVisualNodeFormToSelection();
+        ApplyOverworldFormToProject();
+        ApplyGeneratorParametersToProject();
 
         _project.Name = ProjectName;
         _project.Settings.MapWidth = MapWidth;
@@ -686,6 +925,7 @@ public partial class EditorShellViewModel : ViewModelBase
         _project.Generator.Height = GeneratorHeight;
         _project.Generator.Seed = int.TryParse(GeneratorSeedText, out var seed) ? seed : null;
         _project.Actors = Actors.ToList();
+        _project.Items = Items.ToList();
         _project.Scenes = Scenes.ToList();
         _project.VisualGraphs = VisualGraphs.ToList();
         _project.IsDirty = true;
@@ -700,6 +940,10 @@ public partial class EditorShellViewModel : ViewModelBase
             SceneGenerator = string.Empty;
             SceneWidth = _project?.Settings.MapWidth ?? 80;
             SceneHeight = _project?.Settings.MapHeight ?? 22;
+            SceneSeed = 0;
+            ScenePreviewMap = null;
+            OnPropertyChanged(nameof(SceneEntityCount));
+            OnPropertyChanged(nameof(SceneItemCount));
             return;
         }
 
@@ -708,6 +952,25 @@ public partial class EditorShellViewModel : ViewModelBase
         SceneGenerator = SelectedScene.Generator ?? string.Empty;
         SceneWidth = SelectedScene.Width ?? _project?.Settings.MapWidth ?? 80;
         SceneHeight = SelectedScene.Height ?? _project?.Settings.MapHeight ?? 22;
+        SceneSeed = SelectedScene.Seed ?? 0;
+        RefreshScenePreview();
+        OnPropertyChanged(nameof(SceneEntityCount));
+        OnPropertyChanged(nameof(SceneItemCount));
+    }
+
+    private void RefreshScenePreview()
+    {
+        if (SelectedScene is null || _project is null)
+        {
+            ScenePreviewMap = null;
+            return;
+        }
+
+        ApplySceneFormToSelection();
+        var result = _mapPreviewService.Generate(SelectedScene, _project.Generator);
+        SelectedScene.Seed = result.Seed;
+        SceneSeed = result.Seed;
+        ScenePreviewMap = result.Map;
     }
 
     private void ApplySceneFormToSelection()
@@ -718,6 +981,7 @@ public partial class EditorShellViewModel : ViewModelBase
         SelectedScene.Generator = string.IsNullOrWhiteSpace(SceneGenerator) ? null : SceneGenerator;
         SelectedScene.Width = SceneWidth;
         SelectedScene.Height = SceneHeight;
+        SelectedScene.Seed = SceneSeed;
         MarkDirty();
     }
 
@@ -826,6 +1090,128 @@ public partial class EditorShellViewModel : ViewModelBase
         MarkDirty();
     }
 
+    private void LoadSelectedItemIntoForm()
+    {
+        if (SelectedItem is null)
+        {
+            ItemId = string.Empty;
+            ItemName = string.Empty;
+            ItemGlyph = "!";
+            ItemColorR = 200;
+            ItemColorG = 50;
+            ItemColorB = 50;
+            ItemKind = "consumable";
+            ItemMaxStack = 1;
+            ItemEquipSlot = string.Empty;
+            ItemHealOnUse = 0;
+            return;
+        }
+
+        ItemId = SelectedItem.Id;
+        ItemName = SelectedItem.Name;
+        ItemGlyph = SelectedItem.Glyph.ToString();
+        ItemColorR = SelectedItem.ColorR;
+        ItemColorG = SelectedItem.ColorG;
+        ItemColorB = SelectedItem.ColorB;
+        ItemKind = SelectedItem.Kind;
+        ItemMaxStack = SelectedItem.MaxStack;
+        ItemEquipSlot = SelectedItem.EquipSlot ?? string.Empty;
+        ItemHealOnUse = SelectedItem.HealOnUse;
+    }
+
+    private void ApplyItemFormToSelection()
+    {
+        if (SelectedItem is null) return;
+        SelectedItem.Id = ItemId;
+        SelectedItem.Name = ItemName;
+        SelectedItem.Glyph = ItemGlyph.Length > 0 ? ItemGlyph[0] : '!';
+        SelectedItem.ColorR = (byte)Math.Clamp(ItemColorR, 0, 255);
+        SelectedItem.ColorG = (byte)Math.Clamp(ItemColorG, 0, 255);
+        SelectedItem.ColorB = (byte)Math.Clamp(ItemColorB, 0, 255);
+        SelectedItem.Kind = ItemKind;
+        SelectedItem.MaxStack = ItemMaxStack;
+        SelectedItem.EquipSlot = string.IsNullOrWhiteSpace(ItemEquipSlot) ? null : ItemEquipSlot;
+        SelectedItem.HealOnUse = ItemHealOnUse;
+        MarkDirty();
+    }
+
+    private void LoadOverworldIntoForm()
+    {
+        OverworldCells.Clear();
+        OverworldConnections.Clear();
+        if (_project?.Overworld is null)
+        {
+            OverworldId = string.Empty;
+            return;
+        }
+
+        OverworldId = _project.Overworld.Id;
+        foreach (var cell in _project.Overworld.Cells) OverworldCells.Add(cell);
+        foreach (var connection in _project.Overworld.Connections) OverworldConnections.Add(connection);
+    }
+
+    private void ApplyOverworldFormToProject()
+    {
+        if (_project?.Overworld is null) return;
+        _project.Overworld.Id = OverworldId;
+        MarkDirty();
+    }
+
+    private void LoadGeneratorParametersFromProject(EditorGenerator generator)
+    {
+        GenFillPercent = GetIntParam(generator, "fillPercent", 45);
+        GenSmoothPasses = GetIntParam(generator, "smoothPasses", 5);
+        GenWallThreshold = GetIntParam(generator, "wallThreshold", 4);
+        GenTargetFloorCount = GetIntParam(generator, "targetFloorCount", 1200);
+        GenWalkerCount = GetIntParam(generator, "walkerCount", 4);
+        GenMinRoomSize = GetIntParam(generator, "minRoomSize", 4);
+        GenMaxRoomSize = GetIntParam(generator, "maxRoomSize", 10);
+        GenSplitDepth = GetIntParam(generator, "splitDepth", 4);
+        GenTilesetPath = generator.Parameters.TryGetValue("tileset", out var tileset)
+            ? tileset?.ToString() ?? string.Empty
+            : string.Empty;
+    }
+
+    private void ApplyGeneratorParametersToProject()
+    {
+        if (_project is null) return;
+        _project.Generator.Parameters["fillPercent"] = GenFillPercent;
+        _project.Generator.Parameters["smoothPasses"] = GenSmoothPasses;
+        _project.Generator.Parameters["wallThreshold"] = GenWallThreshold;
+        _project.Generator.Parameters["targetFloorCount"] = GenTargetFloorCount;
+        _project.Generator.Parameters["walkerCount"] = GenWalkerCount;
+        _project.Generator.Parameters["minRoomSize"] = GenMinRoomSize;
+        _project.Generator.Parameters["maxRoomSize"] = GenMaxRoomSize;
+        _project.Generator.Parameters["splitDepth"] = GenSplitDepth;
+        if (string.IsNullOrWhiteSpace(GenTilesetPath))
+        {
+            _project.Generator.Parameters.Remove("tileset");
+        }
+        else
+        {
+            _project.Generator.Parameters["tileset"] = GenTilesetPath;
+        }
+
+        MarkDirty();
+    }
+
+    private static int GetIntParam(EditorGenerator generator, string key, int fallback)
+    {
+        if (!generator.Parameters.TryGetValue(key, out var value))
+        {
+            return fallback;
+        }
+
+        return value switch
+        {
+            int i => i,
+            long l => (int)l,
+            double d => (int)d,
+            JsonElement element when element.ValueKind == JsonValueKind.Number => element.GetInt32(),
+            _ => int.TryParse(value?.ToString(), out var parsed) ? parsed : fallback
+        };
+    }
+
     private void NotifyVisualNodeCount() => OnPropertyChanged(nameof(VisualNodeCount));
 
     private void MarkDirty()
@@ -839,9 +1225,12 @@ public partial class EditorShellViewModel : ViewModelBase
         SaveProjectCommand.NotifyCanExecuteChanged();
         ValidateProjectCommand.NotifyCanExecuteChanged();
         PlaytestCommand.NotifyCanExecuteChanged();
+        StopPlaytestCommand.NotifyCanExecuteChanged();
         BuildProjectCommand.NotifyCanExecuteChanged();
         AddActorCommand.NotifyCanExecuteChanged();
         RemoveActorCommand.NotifyCanExecuteChanged();
+        AddItemCommand.NotifyCanExecuteChanged();
+        RemoveItemCommand.NotifyCanExecuteChanged();
         AddSceneCommand.NotifyCanExecuteChanged();
         AddVisualGraphCommand.NotifyCanExecuteChanged();
         RemoveVisualGraphCommand.NotifyCanExecuteChanged();

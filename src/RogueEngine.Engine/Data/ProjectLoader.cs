@@ -53,6 +53,8 @@ public static class ProjectLoader
             throw new InvalidDataException("Project must define at least one player actor.");
         }
 
+        var items = ItemLoader.LoadAllFromDirectory(Path.Combine(dataDirectory, "items"));
+
         GeneratorDefinition? generator = null;
         if (!string.IsNullOrWhiteSpace(project.DefaultGenerator))
         {
@@ -63,6 +65,26 @@ public static class ProjectLoader
         var visualScriptsDirectory = Path.Combine(projectRoot, "VisualScripts");
         var visualScripts = VisualGraphLoader.LoadAllFromDirectory(visualScriptsDirectory);
 
+        SceneDefinition? defaultScene = null;
+        if (!string.IsNullOrWhiteSpace(project.DefaultScene))
+        {
+            var scenePath = Path.Combine(dataDirectory, project.DefaultScene);
+            if (File.Exists(scenePath))
+            {
+                defaultScene = SceneLoader.Load(scenePath);
+            }
+        }
+
+        OverworldDefinition? defaultOverworld = null;
+        if (!string.IsNullOrWhiteSpace(project.DefaultOverworld))
+        {
+            var overworldPath = Path.Combine(dataDirectory, project.DefaultOverworld);
+            if (File.Exists(overworldPath))
+            {
+                defaultOverworld = OverworldLoader.Load(overworldPath);
+            }
+        }
+
         return new LoadedProject
         {
             ProjectRoot = projectRoot,
@@ -70,7 +92,10 @@ public static class ProjectLoader
             Project = project,
             Settings = settings,
             Actors = actors,
+            Items = items,
             Generator = generator,
+            DefaultScene = defaultScene,
+            DefaultOverworld = defaultOverworld,
             VisualScripts = visualScripts
         };
     }

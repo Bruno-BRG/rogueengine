@@ -6,7 +6,7 @@ Instructions for AI coding agents working in this repository.
 
 **RogueEngine** (`rogueengine`) is a specialized C# engine for 2D tile-based roguelikes. It is **not** a general-purpose game engine. Scope is intentionally narrow: grid maps, entities, turn-based rules, procgen, FOV, pathfinding, scripting, and game export.
 
-**Status:** v0.7.1 — editor shell & project hub. Phases 1–7 done; editor shell in progress (see `docs/planning/EDITOR_VISION.md`).
+**Status:** v0.9 — items/inventory (v0.8.1) and World Toolkit (v0.9) delivered. Phases 1–9 core done; installer → v0.10.
 
 ## Canonical naming
 
@@ -39,7 +39,7 @@ Engine logic must be testable **without** opening a graphical window. Use `IRend
 
 ```
 src/RogueEngine.Engine/       # Core: World, Entity, systems, save/load
-src/RogueEngine.Toolkit/      # ProcGen, bitmask, overworld, FOV, pathfinding, helpers (planned v0.8–0.9)
+src/RogueEngine.Toolkit/      # FOV, pathfinding (v0.8); procGen/bitmask/overworld (v0.9)
 src/RogueEngine.SadConsole/   # Render + input adapter
 src/RogueEngine.Runtime/      # Runs a game project
 src/RogueEngine.Editor/       # Avalonia desktop tool (later phases)

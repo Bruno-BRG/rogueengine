@@ -13,4 +13,10 @@ public static class ProjectDataWriter
 
     public static void WriteGenerator(string path, GeneratorDefinition generator) =>
         GeneratorLoader.Save(path, generator);
+
+    public static void WriteItem(string path, ItemDefinition item) =>
+        ProjectJson.SerializeFile(path, item);
+
+    public static void WriteOverworld(string path, OverworldDefinition overworld) =>
+        ProjectJson.SerializeFile(path, overworld);
 }

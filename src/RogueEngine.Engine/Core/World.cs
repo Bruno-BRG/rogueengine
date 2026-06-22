@@ -5,6 +5,7 @@ namespace RogueEngine.Engine.Core;
 public sealed class World
 {
     public TileMap Map { get; }
+    public MapVisibility Visibility { get; }
     public MessageLog Log { get; } = new();
 
     private readonly List<Entity> _entities = [];
@@ -15,6 +16,7 @@ public sealed class World
     {
         ArgumentNullException.ThrowIfNull(map);
         Map = map;
+        Visibility = new MapVisibility(map.Width, map.Height);
     }
 
     public Entity AddEntity(Entity entity)

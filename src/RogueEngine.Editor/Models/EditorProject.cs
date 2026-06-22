@@ -11,9 +11,13 @@ public sealed class EditorProject
     public string Version { get; set; } = "1";
     public string DataPath { get; set; } = "Data";
     public string DefaultGeneratorPath { get; set; } = "generators/dungeon.json";
+    public string? DefaultScenePath { get; set; }
+    public string? DefaultOverworldPath { get; set; }
     public EditorSettings Settings { get; set; } = new();
     public List<EditorActor> Actors { get; set; } = [];
+    public List<EditorItem> Items { get; set; } = [];
     public EditorGenerator Generator { get; set; } = new();
+    public EditorOverworld? Overworld { get; set; }
     public List<EditorVisualGraph> VisualGraphs { get; set; } = [];
     public List<EditorScene> Scenes { get; set; } = [];
     public List<EditorScriptFile> ScriptFiles { get; set; } = [];
@@ -21,7 +25,9 @@ public sealed class EditorProject
 
     public string DataDirectory => Path.Combine(ProjectRoot, DataPath);
     public string ActorsDirectory => Path.Combine(DataDirectory, "actors");
+    public string ItemsDirectory => Path.Combine(DataDirectory, "items");
     public string ScenesDirectory => Path.Combine(DataDirectory, "scenes");
+    public string OverworldDirectory => Path.Combine(DataDirectory, "overworld");
     public string GeneratorFilePath => Path.Combine(DataDirectory, DefaultGeneratorPath);
     public string VisualScriptsDirectory => Path.Combine(ProjectRoot, "VisualScripts");
     public string ScriptsDirectory => Path.Combine(ProjectRoot, "Scripts");
@@ -36,10 +42,16 @@ public sealed class EditorProject
             Version = loaded.Project.Version,
             DataPath = loaded.Project.DataPath,
             DefaultGeneratorPath = loaded.Project.DefaultGenerator ?? "generators/dungeon.json",
+            DefaultScenePath = loaded.Project.DefaultScene,
+            DefaultOverworldPath = loaded.Project.DefaultOverworld,
             Settings = EditorSettings.FromEngine(loaded.Settings),
             Actors = loaded.Actors.Values
                 .Select(EditorActor.FromEngine)
                 .OrderBy(actor => actor.Id, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            Items = loaded.Items.Values
+                .Select(EditorItem.FromEngine)
+                .OrderBy(item => item.Id, StringComparer.OrdinalIgnoreCase)
                 .ToList(),
             Generator = loaded.Generator is not null
                 ? EditorGenerator.FromEngine(loaded.Generator)
@@ -77,6 +89,13 @@ public sealed class EditorProject
                 .ToList();
         }
 
+        if (loaded.DefaultOverworld is not null)
+        {
+            editor.Overworld = EditorOverworld.FromEngine(
+                loaded.DefaultOverworld,
+                Path.GetFileName(loaded.Project.DefaultOverworld ?? "world.json"));
+        }
+
         return editor;
     }
 
@@ -85,7 +104,9 @@ public sealed class EditorProject
         Name = Name,
         Version = Version,
         DataPath = DataPath,
-        DefaultGenerator = DefaultGeneratorPath
+        DefaultGenerator = DefaultGeneratorPath,
+        DefaultScene = DefaultScenePath,
+        DefaultOverworld = DefaultOverworldPath
     };
 
     public GameSettings ToGameSettings() => Settings.ToEngine();
@@ -169,6 +190,7 @@ public sealed class EditorGenerator
     public int Width { get; set; } = 80;
     public int Height { get; set; } = 22;
     public int? Seed { get; set; }
+    public Dictionary<string, object> Parameters { get; set; } = [];
 
     public static EditorGenerator FromEngine(GeneratorDefinition generator) => new()
     {
@@ -176,7 +198,10 @@ public sealed class EditorGenerator
         Algorithm = generator.Algorithm,
         Width = generator.Width,
         Height = generator.Height,
-        Seed = generator.Seed
+        Seed = generator.Seed,
+        Parameters = generator.Parameters is not null
+            ? new Dictionary<string, object>(generator.Parameters)
+            : []
     };
 
     public GeneratorDefinition ToEngine() => new()
@@ -186,6 +211,6 @@ public sealed class EditorGenerator
         Width = Width,
         Height = Height,
         Seed = Seed,
-        Parameters = new Dictionary<string, object>()
+        Parameters = Parameters.Count > 0 ? new Dictionary<string, object>(Parameters) : null
     };
 }

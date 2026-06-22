@@ -20,12 +20,24 @@ public static class GameSaveLoad
         var snapshots = new List<EntitySnapshot>();
         foreach (var entity in world.Entities)
         {
-            if (!entity.TryGetComponent<ActorIdComponent>(out var actorId) || actorId is null)
+            if (!entity.TryGetComponent<PositionComponent>(out var position) || position is null)
             {
                 continue;
             }
 
-            if (!entity.TryGetComponent<PositionComponent>(out var position) || position is null)
+            if (entity.TryGetComponent<ItemPickupComponent>(out var pickup) && pickup is not null)
+            {
+                snapshots.Add(new EntitySnapshot
+                {
+                    PickupItemId = pickup.ItemId,
+                    PickupCount = pickup.Count,
+                    X = position.Position.X,
+                    Y = position.Position.Y
+                });
+                continue;
+            }
+
+            if (!entity.TryGetComponent<ActorIdComponent>(out var actorId) || actorId is null)
             {
                 continue;
             }
@@ -35,12 +47,30 @@ public static class GameSaveLoad
                 continue;
             }
 
+            InventorySnapshot? inventorySnapshot = null;
+            if (entity.TryGetComponent<InventoryComponent>(out var inventory) && inventory is not null)
+            {
+                inventorySnapshot = new InventorySnapshot
+                {
+                    EquippedWeaponId = inventory.EquippedWeaponId,
+                    EquippedArmorId = inventory.EquippedArmorId,
+                    Stacks = inventory.Stacks
+                        .Select(stack => new InventoryStackSnapshot
+                        {
+                            ItemId = stack.ItemId,
+                            Count = stack.Count
+                        })
+                        .ToArray()
+                };
+            }
+
             snapshots.Add(new EntitySnapshot
             {
                 ActorId = actorId.ActorId,
                 X = position.Position.X,
                 Y = position.Position.Y,
-                CurrentHp = health.CurrentHp
+                CurrentHp = health.CurrentHp,
+                Inventory = inventorySnapshot
             });
         }
 

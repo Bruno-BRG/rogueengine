@@ -12,7 +12,7 @@ public partial class EditorDocumentTab : ObservableObject
     private string _title = string.Empty;
 
     [ObservableProperty]
-    private string _icon = "📄";
+    private string _icon = "—";
 
     [ObservableProperty]
     private bool _isModified;

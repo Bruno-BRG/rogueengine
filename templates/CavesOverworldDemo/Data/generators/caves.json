@@ -1,0 +1,12 @@
+{
+  "id": "caves",
+  "algorithm": "cellular_caves",
+  "width": 80,
+  "height": 22,
+  "parameters": {
+    "fillPercent": 45,
+    "smoothPasses": 5,
+    "wallThreshold": 4,
+    "tileset": "tilesets/stone_walls.json"
+  }
+}

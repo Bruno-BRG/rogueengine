@@ -2,6 +2,7 @@ using RogueEngine.BuildTool;
 using RogueEngine.Editor.Models;
 using RogueEngine.Engine.Data;
 using RogueEngine.Engine.VisualScripting;
+using RogueEngine.Toolkit.ProcGen;
 
 namespace RogueEngine.Editor.Services;
 
@@ -90,6 +91,39 @@ public sealed class ProjectService
             File.Delete(staleFile);
         }
 
+        Directory.CreateDirectory(project.ItemsDirectory);
+        var itemFiles = Directory.Exists(project.ItemsDirectory)
+            ? Directory.GetFiles(project.ItemsDirectory, "*.json").ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : [];
+
+        foreach (var item in project.Items)
+        {
+            var fileName = string.IsNullOrWhiteSpace(item.SourceFileName)
+                ? $"{item.Id}.json"
+                : item.SourceFileName;
+            var itemPath = Path.Combine(project.ItemsDirectory, fileName);
+            ProjectDataWriter.WriteItem(itemPath, item.ToEngine());
+            item.SourceFileName = fileName;
+            itemFiles.Remove(itemPath);
+        }
+
+        foreach (var staleFile in itemFiles)
+        {
+            File.Delete(staleFile);
+        }
+
+        if (project.Overworld is not null)
+        {
+            Directory.CreateDirectory(project.OverworldDirectory);
+            var overworldFileName = string.IsNullOrWhiteSpace(project.Overworld.SourceFileName)
+                ? "world.json"
+                : project.Overworld.SourceFileName;
+            var overworldPath = Path.Combine(project.OverworldDirectory, overworldFileName);
+            ProjectDataWriter.WriteOverworld(overworldPath, project.Overworld.ToEngine());
+            project.Overworld.SourceFileName = overworldFileName;
+            project.DefaultOverworldPath = $"overworld/{overworldFileName}";
+        }
+
         project.IsDirty = false;
         return [];
     }
@@ -138,9 +172,9 @@ public sealed class ProjectService
             errors.Add("Generator width and height must be greater than zero.");
         }
 
-        if (!string.Equals(project.Generator.Algorithm, "rooms_corridors", StringComparison.OrdinalIgnoreCase))
+        if (!GeneratorRegistry.TryGet(project.Generator.Algorithm, out _))
         {
-            errors.Add($"Generator algorithm '{project.Generator.Algorithm}' is not supported yet.");
+            errors.Add($"Generator algorithm '{project.Generator.Algorithm}' is not supported.");
         }
 
         return errors;

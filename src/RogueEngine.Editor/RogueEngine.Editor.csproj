@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RogueEngine.BuildTool\RogueEngine.BuildTool.csproj" />
     <ProjectReference Include="..\RogueEngine.Engine\RogueEngine.Engine.csproj" />
+    <ProjectReference Include="..\RogueEngine.Toolkit\RogueEngine.Toolkit.csproj" />
   </ItemGroup>
 
   <ItemGroup>

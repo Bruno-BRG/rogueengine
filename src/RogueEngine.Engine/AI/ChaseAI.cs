@@ -1,11 +1,15 @@
+using RogueEngine.Engine.AI;
 using RogueEngine.Engine.Commands;
 using RogueEngine.Engine.Components;
 using RogueEngine.Engine.Core;
+using RogueEngine.Engine.Navigation;
 
 namespace RogueEngine.Engine.AI;
 
 public static class ChaseAI
 {
+    public static IGridNavigator? Navigator { get; set; }
+
     public static void TakeTurn(World world, Entity enemy)
     {
         ArgumentNullException.ThrowIfNull(world);
@@ -46,26 +50,38 @@ public static class ChaseAI
             return;
         }
 
-        var stepX = Math.Sign(deltaX);
-        var stepY = Math.Sign(deltaY);
+        if (Navigator is not null &&
+            Navigator.TryGetNextStep(world.Map, enemyPosition.Position, playerPosition.Position, out var nextStep) &&
+            (nextStep.X != enemyPosition.Position.X || nextStep.Y != enemyPosition.Position.Y))
+        {
+            var stepX = nextStep.X - enemyPosition.Position.X;
+            var stepY = nextStep.Y - enemyPosition.Position.Y;
+            if (TryMove(world, enemy, stepX, stepY))
+            {
+                return;
+            }
+        }
+
+        var greedyStepX = Math.Sign(deltaX);
+        var greedyStepY = Math.Sign(deltaY);
 
         if (Math.Abs(deltaX) >= Math.Abs(deltaY))
         {
-            if (TryMove(world, enemy, stepX, 0))
+            if (TryMove(world, enemy, greedyStepX, 0))
             {
                 return;
             }
 
-            TryMove(world, enemy, 0, stepY);
+            TryMove(world, enemy, 0, greedyStepY);
             return;
         }
 
-        if (TryMove(world, enemy, 0, stepY))
+        if (TryMove(world, enemy, 0, greedyStepY))
         {
             return;
         }
 
-        TryMove(world, enemy, stepX, 0);
+        TryMove(world, enemy, greedyStepX, 0);
     }
 
     private static bool TryMove(World world, Entity entity, int deltaX, int deltaY)

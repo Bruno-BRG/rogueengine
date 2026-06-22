@@ -10,8 +10,11 @@ public sealed class EditorScene
     public string? Generator { get; set; }
     public int? Width { get; set; }
     public int? Height { get; set; }
+    public int? Seed { get; set; }
     public int? PlayerSpawnX { get; set; }
     public int? PlayerSpawnY { get; set; }
+    public List<EditorSceneEntity> Entities { get; set; } = [];
+    public List<EditorSceneItem> ItemPlacements { get; set; } = [];
 
     public static EditorScene FromEngine(SceneDefinition scene, string fileName) => new()
     {
@@ -21,8 +24,26 @@ public sealed class EditorScene
         Generator = scene.Generator,
         Width = scene.Width,
         Height = scene.Height,
+        Seed = scene.Seed,
         PlayerSpawnX = scene.PlayerSpawnX,
-        PlayerSpawnY = scene.PlayerSpawnY
+        PlayerSpawnY = scene.PlayerSpawnY,
+        Entities = scene.Entities
+            .Select(entity => new EditorSceneEntity
+            {
+                ActorId = entity.ActorId,
+                X = entity.X,
+                Y = entity.Y
+            })
+            .ToList(),
+        ItemPlacements = scene.ItemPlacements
+            .Select(item => new EditorSceneItem
+            {
+                ItemId = item.ItemId,
+                X = item.X,
+                Y = item.Y,
+                Count = item.Count
+            })
+            .ToList()
     };
 
     public SceneDefinition ToEngine() => new()
@@ -32,8 +53,26 @@ public sealed class EditorScene
         Generator = Generator,
         Width = Width,
         Height = Height,
+        Seed = Seed,
         PlayerSpawnX = PlayerSpawnX,
-        PlayerSpawnY = PlayerSpawnY
+        PlayerSpawnY = PlayerSpawnY,
+        Entities = Entities
+            .Select(entity => new SceneEntityPlacement
+            {
+                ActorId = entity.ActorId,
+                X = entity.X,
+                Y = entity.Y
+            })
+            .ToList(),
+        ItemPlacements = ItemPlacements
+            .Select(item => new SceneItemPlacement
+            {
+                ItemId = item.ItemId,
+                X = item.X,
+                Y = item.Y,
+                Count = item.Count
+            })
+            .ToList()
     };
 }
 

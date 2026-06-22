@@ -1,50 +1,64 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+  <Style Selector="Window">
+    <Setter Property="FontFamily" Value="Segoe UI, Inter, sans-serif" />
+  </Style>
+
   <Style Selector="Button">
     <Setter Property="Background" Value="#232329"/>
     <Setter Property="Foreground" Value="#e3e3e6"/>
     <Setter Property="BorderBrush" Value="#2d2d35"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="4"/>
-    <Setter Property="Padding" Value="12,6"/>
-    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="CornerRadius" Value="2"/>
+    <Setter Property="Padding" Value="10,5"/>
+    <Setter Property="FontWeight" Value="Normal"/>
   </Style>
   <Style Selector="Button:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#2d2d35"/>
-    <Setter Property="BorderBrush" Value="#3d3d45"/>
+    <Setter Property="Background" Value="#404047"/>
+    <Setter Property="BorderBrush" Value="#4a4a52"/>
     <Setter Property="Foreground" Value="#ffffff"/>
   </Style>
 
   <Style Selector="Button.primary">
-    <Setter Property="Background" Value="#0dbd85"/>
+    <Setter Property="Background" Value="#5b8def"/>
     <Setter Property="Foreground" Value="#ffffff"/>
-    <Setter Property="BorderBrush" Value="#0dbd85"/>
-    <Setter Property="Padding" Value="16,10"/>
+    <Setter Property="BorderBrush" Value="#5b8def"/>
+    <Setter Property="Padding" Value="14,7"/>
   </Style>
   <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#0fb37a"/>
-    <Setter Property="BorderBrush" Value="#0fb37a"/>
+    <Setter Property="Background" Value="#4a7de0"/>
+    <Setter Property="BorderBrush" Value="#4a7de0"/>
   </Style>
 
   <Style Selector="Button.playtest">
-    <Setter Property="Background" Value="#0dbd85"/>
+    <Setter Property="Background" Value="#3d6b3d"/>
     <Setter Property="Foreground" Value="#ffffff"/>
-    <Setter Property="BorderBrush" Value="#0dbd85"/>
+    <Setter Property="BorderBrush" Value="#3d6b3d"/>
   </Style>
   <Style Selector="Button.playtest:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#0fb37a"/>
-    <Setter Property="BorderBrush" Value="#0fb37a"/>
+    <Setter Property="Background" Value="#4a7a4a"/>
+    <Setter Property="BorderBrush" Value="#4a7a4a"/>
+  </Style>
+
+  <Style Selector="Button.stop">
+    <Setter Property="Background" Value="#8b3a3a"/>
+    <Setter Property="Foreground" Value="#ffffff"/>
+    <Setter Property="BorderBrush" Value="#8b3a3a"/>
+  </Style>
+  <Style Selector="Button.stop:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#a04444"/>
+    <Setter Property="BorderBrush" Value="#a04444"/>
   </Style>
 
   <Style Selector="Button.build">
-    <Setter Property="Background" Value="#e05300"/>
-    <Setter Property="Foreground" Value="#ffffff"/>
-    <Setter Property="BorderBrush" Value="#e05300"/>
+    <Setter Property="Background" Value="#5a4a38"/>
+    <Setter Property="Foreground" Value="#e3e3e6"/>
+    <Setter Property="BorderBrush" Value="#6a5a48"/>
   </Style>
   <Style Selector="Button.build:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#c74900"/>
-    <Setter Property="BorderBrush" Value="#c74900"/>
+    <Setter Property="Background" Value="#6a5a48"/>
+    <Setter Property="BorderBrush" Value="#7a6a58"/>
   </Style>
 
   <Style Selector="Button.doc-tab">
@@ -52,58 +66,72 @@
     <Setter Property="BorderThickness" Value="0,0,0,2"/>
     <Setter Property="BorderBrush" Value="Transparent"/>
     <Setter Property="CornerRadius" Value="0"/>
-    <Setter Property="Padding" Value="14,8"/>
+    <Setter Property="Padding" Value="12,6"/>
     <Setter Property="Foreground" Value="#9a9a9f"/>
+    <Setter Property="FontWeight" Value="Normal"/>
   </Style>
   <Style Selector="Button.doc-tab.active">
-    <Setter Property="Foreground" Value="#0dbd85"/>
-    <Setter Property="BorderBrush" Value="#0dbd85"/>
+    <Setter Property="Foreground" Value="#5b8def"/>
+    <Setter Property="BorderBrush" Value="#5b8def"/>
     <Setter Property="Background" Value="#1a1a20"/>
+  </Style>
+
+  <Style Selector="Button.doc-tab-close">
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Padding" Value="4,2"/>
+    <Setter Property="Foreground" Value="#7a7a80"/>
+    <Setter Property="FontSize" Value="11"/>
+    <Setter Property="CornerRadius" Value="2"/>
+  </Style>
+  <Style Selector="Button.doc-tab-close:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="#404047"/>
+    <Setter Property="Foreground" Value="#e3e3e6"/>
   </Style>
 
   <Style Selector="TextBox">
     <Setter Property="Background" Value="#232329"/>
     <Setter Property="BorderBrush" Value="#2d2d35"/>
     <Setter Property="Foreground" Value="#e3e3e6"/>
-    <Setter Property="CornerRadius" Value="4"/>
-    <Setter Property="Padding" Value="8,6"/>
-    <Setter Property="SelectionBrush" Value="#0dbd85"/>
+    <Setter Property="CornerRadius" Value="2"/>
+    <Setter Property="Padding" Value="8,5"/>
+    <Setter Property="SelectionBrush" Value="#5b8def"/>
   </Style>
   <Style Selector="TextBox:focus /template/ Border">
-    <Setter Property="BorderBrush" Value="#0dbd85"/>
+    <Setter Property="BorderBrush" Value="#5b8def"/>
   </Style>
 
   <Style Selector="NumericUpDown">
     <Setter Property="Background" Value="#232329"/>
     <Setter Property="BorderBrush" Value="#2d2d35"/>
     <Setter Property="Foreground" Value="#e3e3e6"/>
-    <Setter Property="CornerRadius" Value="4"/>
+    <Setter Property="CornerRadius" Value="2"/>
   </Style>
 
   <Style Selector="ComboBox">
     <Setter Property="Background" Value="#232329"/>
     <Setter Property="BorderBrush" Value="#2d2d35"/>
     <Setter Property="Foreground" Value="#e3e3e6"/>
-    <Setter Property="CornerRadius" Value="4"/>
-    <Setter Property="Padding" Value="8,6"/>
+    <Setter Property="CornerRadius" Value="2"/>
+    <Setter Property="Padding" Value="8,5"/>
   </Style>
 
   <Style Selector="ListBox">
     <Setter Property="Background" Value="#1c1c21"/>
     <Setter Property="BorderBrush" Value="#2d2d35"/>
     <Setter Property="BorderThickness" Value="1"/>
-    <Setter Property="CornerRadius" Value="4"/>
+    <Setter Property="CornerRadius" Value="0"/>
   </Style>
   <Style Selector="ListBoxItem">
-    <Setter Property="Padding" Value="10,8"/>
-    <Setter Property="CornerRadius" Value="4"/>
+    <Setter Property="Padding" Value="8,6"/>
+    <Setter Property="CornerRadius" Value="0"/>
   </Style>
   <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
-    <Setter Property="Background" Value="#2d2d35"/>
+    <Setter Property="Background" Value="#404047"/>
   </Style>
   <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
     <Setter Property="Background" Value="#32323d"/>
-    <Setter Property="Foreground" Value="#0dbd85"/>
+    <Setter Property="Foreground" Value="#5b8def"/>
   </Style>
 
   <Style Selector="TreeView">
@@ -111,10 +139,14 @@
     <Setter Property="BorderThickness" Value="0"/>
   </Style>
   <Style Selector="TreeViewItem">
-    <Setter Property="Padding" Value="4,2"/>
+    <Setter Property="Padding" Value="2,1"/>
   </Style>
 
   <Style Selector="CheckBox">
+    <Setter Property="Foreground" Value="#e3e3e6"/>
+  </Style>
+
+  <Style Selector="Expander">
     <Setter Property="Foreground" Value="#e3e3e6"/>
   </Style>
 </Styles>

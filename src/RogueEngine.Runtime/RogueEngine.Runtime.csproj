@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\RogueEngine.Engine\RogueEngine.Engine.csproj" />
     <ProjectReference Include="..\RogueEngine.SadConsole\RogueEngine.SadConsole.csproj" />
+    <ProjectReference Include="..\RogueEngine.Toolkit\RogueEngine.Toolkit.csproj" />
   </ItemGroup>
 
   <ItemGroup>

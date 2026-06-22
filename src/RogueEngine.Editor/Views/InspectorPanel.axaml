@@ -1,0 +1,103 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:RogueEngine.Editor.ViewModels"
+             x:Class="RogueEngine.Editor.Views.InspectorPanel"
+             x:DataType="vm:EditorShellViewModel">
+  <ScrollViewer>
+    <StackPanel Spacing="10">
+      <TextBlock Text="Inspector" FontSize="11" Foreground="#9a9a9f" />
+      <TextBlock Text="{Binding InspectorTitle}" FontSize="15" FontWeight="SemiBold" />
+
+      <Expander Header="Identity" IsExpanded="True" IsVisible="{Binding IsActorDocument}">
+        <StackPanel Spacing="6" Margin="0,6,0,0">
+          <TextBlock Text="{Binding ActorId}" />
+          <TextBlock>
+            <Run Text="Glyph: " Foreground="#9a9a9f" />
+            <Run Text="{Binding ActorGlyph}" />
+          </TextBlock>
+          <CheckBox Content="Player" IsChecked="{Binding ActorIsPlayer}" IsEnabled="False" />
+        </StackPanel>
+      </Expander>
+
+      <Expander Header="Stats" IsExpanded="True" IsVisible="{Binding IsActorDocument}">
+        <StackPanel Spacing="6" Margin="0,6,0,0">
+          <TextBlock>
+            <Run Text="Max HP: " Foreground="#9a9a9f" />
+            <Run Text="{Binding ActorMaxHp}" />
+          </TextBlock>
+          <CheckBox Content="Blocks movement" IsChecked="{Binding ActorBlocksMovement}" IsEnabled="False" />
+          <CheckBox Content="Chase AI" IsChecked="{Binding ActorHasChaseAI}" IsEnabled="False" />
+        </StackPanel>
+      </Expander>
+
+      <Expander Header="Behavior" IsVisible="{Binding IsActorDocument}">
+        <StackPanel Spacing="6" Margin="0,6,0,0">
+          <TextBlock Text="{Binding ActorBehavior}" TextWrapping="Wrap" />
+        </StackPanel>
+      </Expander>
+
+      <Expander Header="Scene" IsExpanded="True" IsVisible="{Binding IsSceneDocument}">
+        <StackPanel Spacing="6" Margin="0,6,0,0">
+          <TextBlock Text="{Binding SceneName}" />
+          <TextBlock Text="{Binding SceneGenerator}" FontSize="11" Foreground="#9a9a9f" />
+          <TextBlock>
+            <Run Text="Size: " Foreground="#9a9a9f" />
+            <Run Text="{Binding SceneWidth}" />
+            <Run Text=" x " />
+            <Run Text="{Binding SceneHeight}" />
+          </TextBlock>
+          <TextBlock>
+            <Run Text="Seed: " Foreground="#9a9a9f" />
+            <Run Text="{Binding SceneSeed}" />
+          </TextBlock>
+          <TextBlock>
+            <Run Text="Entities: " Foreground="#9a9a9f" />
+            <Run Text="{Binding SceneEntityCount}" />
+          </TextBlock>
+          <TextBlock>
+            <Run Text="Items: " Foreground="#9a9a9f" />
+            <Run Text="{Binding SceneItemCount}" />
+          </TextBlock>
+        </StackPanel>
+      </Expander>
+
+      <Expander Header="Item" IsExpanded="True" IsVisible="{Binding IsItemDocument}">
+        <StackPanel Spacing="6" Margin="0,6,0,0">
+          <TextBlock Text="{Binding ItemName}" />
+          <TextBlock>
+            <Run Text="Kind: " Foreground="#9a9a9f" />
+            <Run Text="{Binding ItemKind}" />
+          </TextBlock>
+          <TextBlock>
+            <Run Text="Stack: " Foreground="#9a9a9f" />
+            <Run Text="{Binding ItemMaxStack}" />
+          </TextBlock>
+        </StackPanel>
+      </Expander>
+
+      <Expander Header="Overworld" IsExpanded="True" IsVisible="{Binding IsOverworldDocument}">
+        <StackPanel Spacing="6" Margin="0,6,0,0">
+          <TextBlock Text="{Binding OverworldId}" />
+          <TextBlock>
+            <Run Text="Cells: " Foreground="#9a9a9f" />
+            <Run Text="{Binding OverworldCells.Count}" />
+          </TextBlock>
+        </StackPanel>
+      </Expander>
+
+      <Expander Header="Graph" IsExpanded="True" IsVisible="{Binding IsVisualScriptDocument}">
+        <StackPanel Spacing="6" Margin="0,6,0,0">
+          <TextBlock Text="{Binding VisualGraphId}" />
+          <TextBlock>
+            <Run Text="Nodes: " Foreground="#9a9a9f" />
+            <Run Text="{Binding VisualNodeCount}" />
+          </TextBlock>
+        </StackPanel>
+      </Expander>
+
+      <Expander Header="Script" IsVisible="{Binding IsCodeScriptDocument}">
+        <TextBlock Text="Read-only in editor. Edit in your IDE." FontSize="11" Foreground="#9a9a9f" TextWrapping="Wrap" Margin="0,6,0,0" />
+      </Expander>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

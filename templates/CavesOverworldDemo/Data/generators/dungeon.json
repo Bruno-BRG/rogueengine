@@ -1,0 +1,7 @@
+{
+  "id": "main_dungeon",
+  "algorithm": "rooms_corridors",
+  "width": 80,
+  "height": 22,
+  "parameters": {}
+}

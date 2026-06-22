@@ -2,5 +2,6 @@
   "name": "BasicRoguelike",
   "version": "1",
   "dataPath": "Data",
-  "defaultGenerator": "generators/dungeon.json"
+  "defaultGenerator": "generators/dungeon.json",
+  "defaultScene": "scenes/main.scene.json"
 }

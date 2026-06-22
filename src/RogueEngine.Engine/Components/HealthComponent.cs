@@ -29,4 +29,14 @@ public sealed class HealthComponent : IComponent
 
         CurrentHp = Math.Max(0, CurrentHp - amount);
     }
+
+    public void Heal(int amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        CurrentHp = Math.Min(MaxHp, CurrentHp + amount);
+    }
 }

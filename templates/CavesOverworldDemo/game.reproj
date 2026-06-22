@@ -1,0 +1,7 @@
+{
+  "name": "CavesOverworldDemo",
+  "version": "1",
+  "dataPath": "Data",
+  "defaultGenerator": "generators/caves.json",
+  "defaultOverworld": "overworld/world.json"
+}

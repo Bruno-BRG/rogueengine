@@ -12,32 +12,30 @@
         Foreground="#e3e3e6"
         WindowStartupLocation="CenterScreen">
 
-  <Grid ColumnDefinitions="*,380">
-    <!-- Hero panel -->
-    <Border Grid.Column="0" Padding="48">
-      <StackPanel VerticalAlignment="Center" Spacing="24" MaxWidth="480">
-        <StackPanel Spacing="8">
-          <TextBlock Text="RogueEngine" FontSize="42" FontWeight="Bold" Foreground="#ffffff" />
-          <TextBlock Text="2D tile-based roguelike engine" FontSize="16" Foreground="#9a9a9f" />
-          <TextBlock Text="Create dungeon crawlers with scenes, entities, C# scripts, and visual behaviors — inspired by the best game IDEs." FontSize="13" Foreground="#7a7a80" TextWrapping="Wrap" />
+  <Grid ColumnDefinitions="*,340">
+    <Border Grid.Column="0" Padding="40">
+      <StackPanel VerticalAlignment="Center" Spacing="20" MaxWidth="460">
+        <StackPanel Spacing="6">
+          <TextBlock Text="RogueEngine" FontSize="36" FontWeight="SemiBold" Foreground="#ffffff" />
+          <TextBlock Text="Open or create a project" FontSize="14" Foreground="#9a9a9f" />
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" Spacing="12">
-          <Button Classes="primary" Content="✨ Create New Project" Command="{Binding CreateProjectCommand}" />
-          <Button Content="📂 Open Project" Command="{Binding OpenProjectCommand}" Padding="16,10" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button Classes="primary" Content="New project" Command="{Binding CreateProjectCommand}" />
+          <Button Content="Open project" Command="{Binding OpenProjectCommand}" />
         </StackPanel>
 
         <Border IsVisible="{Binding MostRecentProject, Converter={x:Static ObjectConverters.IsNotNull}}"
-                Background="#1c1c21" BorderBrush="#2d2d35" BorderThickness="1" CornerRadius="8" Padding="16">
-          <StackPanel Spacing="10">
-            <TextBlock Text="CONTINUE WHERE YOU LEFT OFF" FontSize="10" FontWeight="Bold" Foreground="#9a9a9f" LetterSpacing="1" />
-            <TextBlock Text="{Binding MostRecentProject.Name}" FontSize="18" FontWeight="Bold" Foreground="#0dbd85" />
+                Background="#1c1c21" BorderBrush="#2d2d35" BorderThickness="1" Padding="14">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Recent" FontSize="11" Foreground="#9a9a9f" />
+            <TextBlock Text="{Binding MostRecentProject.Name}" FontSize="16" FontWeight="SemiBold" Foreground="#5b8def" />
             <TextBlock Text="{Binding MostRecentProject.ReprojPath}" FontSize="11" Foreground="#7a7a80" TextWrapping="Wrap" />
             <TextBlock FontSize="11" Foreground="#9a9a9f">
-              <Run Text="Last opened: " />
+              <Run Text="Last opened " />
               <Run Text="{Binding MostRecentProject.LastOpenedDisplay}" />
             </TextBlock>
-            <Button Classes="primary" Content="▶ Open Recent Project" Command="{Binding OpenMostRecentProjectCommand}" HorizontalAlignment="Left" />
+            <Button Classes="primary" Content="Open" Command="{Binding OpenMostRecentProjectCommand}" HorizontalAlignment="Left" />
           </StackPanel>
         </Border>
 
@@ -45,17 +43,16 @@
       </StackPanel>
     </Border>
 
-    <!-- Recent projects sidebar -->
-    <Border Grid.Column="1" Background="#16161a" BorderBrush="#2d2d35" BorderThickness="1,0,0,0" Padding="24">
+    <Border Grid.Column="1" Background="#16161a" BorderBrush="#2d2d35" BorderThickness="1,0,0,0" Padding="20">
       <DockPanel>
-        <TextBlock DockPanel.Dock="Top" Text="RECENT PROJECTS" FontSize="11" FontWeight="Bold" Foreground="#9a9a9f" Margin="0,0,0,12" LetterSpacing="1" />
-        <Button DockPanel.Dock="Bottom" Content="Open Selected" Command="{Binding OpenRecentProjectCommand}" HorizontalAlignment="Stretch" Margin="0,12,0,0" Classes="primary" />
+        <TextBlock DockPanel.Dock="Top" Text="Recent projects" FontSize="11" Foreground="#9a9a9f" Margin="0,0,0,10" />
+        <Button DockPanel.Dock="Bottom" Content="Open selected" Command="{Binding OpenRecentProjectCommand}" HorizontalAlignment="Stretch" Margin="0,10,0,0" />
 
         <ListBox ItemsSource="{Binding RecentProjects}" SelectedItem="{Binding SelectedRecentProject}">
           <ListBox.ItemTemplate>
             <DataTemplate>
-              <StackPanel Spacing="4">
-                <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+              <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
                 <TextBlock Text="{Binding ReprojPath}" FontSize="10" Foreground="#7a7a80" TextWrapping="Wrap" />
                 <TextBlock Text="{Binding LastOpenedDisplay}" FontSize="10" Foreground="#9a9a9f" />
               </StackPanel>

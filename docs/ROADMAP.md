@@ -2,7 +2,7 @@
 
 Living development plan for the **rogueengine** repository. Update this file as phases complete.
 
-**Current status:** `0.7.1 — Editor shell & project hub` (launcher, resource tree, document tabs, scenes)
+**Current status:** `0.9 — Items, World Toolkit & editor` (inventory, pluggable generators, bitmask autotile, overworld MVP)
 
 **Last updated:** 2026-06-20
 
@@ -20,9 +20,10 @@ Living development plan for the **rogueengine** repository. Update this file as 
 | **0.5** | Portable build | Windows x64 portable export | Done |
 | **0.6** | Basic editor | Create, open, edit data, playtest, export | Done |
 | **0.7** | Visual scripting MVP | Simple graphs compiled to C# | Done |
-| **0.7.1** | Editor shell | Project hub, resource tree, scene tabs | In progress |
-| **0.8** | Roguelike depth | FOV, pathfinding, items/inventory | Not started |
-| **0.9** | World Toolkit | ProcGen lib, bitmask, overworld, generator picker | Not started |
+| **0.7.1** | Editor shell | Project hub, resource tree, scene tabs | Done |
+| **0.8** | Roguelike depth | FOV, pathfinding, scene viewport, Run/Stop | Done |
+| **0.8.1** | Items & inventory | JSON schema, pickup, use, equip | Done |
+| **0.9** | World Toolkit | ProcGen lib, bitmask, overworld, generator picker | Done |
 | **0.10** | Installer | MSI/EXE via WiX | Not started |
 | **1.0** | Initial release | Engine usable for at least two sample games | Not started |
 
@@ -116,8 +117,9 @@ Living development plan for the **rogueengine** repository. Update this file as 
 - [x] Editor shell: resource tree, document tabs, inspector, console
 - [x] Scene definitions (`Data/scenes/*.scene.json`)
 - [x] Scripts listed in resource tree
-- [ ] Map viewport / tile painter (Phase E2)
-- [ ] Closable document tabs
+- [x] Map viewport with entity placement and seed preview
+- [x] Closable document tabs
+- [x] Desktop UI polish (sentence case, flat panels, no emojis)
 - [ ] Dockable panels (Godot-style)
 
 **Spec:** [`docs/planning/EDITOR_VISION.md`](planning/EDITOR_VISION.md)
@@ -128,15 +130,14 @@ Living development plan for the **rogueengine** repository. Update this file as 
 
 ### Phase 8 — Roguelike depth (→ v0.8)
 
-Systems from the architecture spec not yet implemented:
-
-- [ ] Field of view (shadowcasting + explored/visible tile state)
-- [ ] Pathfinding (A* on grid, Dijkstra map for AI)
-- [ ] Items & inventory (JSON schema, pickup, use, equip)
+- [x] Field of view (line-of-sight + explored/visible tile state)
+- [x] Pathfinding (A* on grid via `GridPathfinder`)
+- [x] AI uses pathfinding (`ChaseAI` + `IGridNavigator`)
+- [x] Scene entity placements spawn in runtime (`WorldBuilder` + `defaultScene`)
+- [x] Items & inventory (JSON schema, pickup, use, equip) — **v0.8.1**
 - [ ] Interaction system (doors, stairs, usable tiles)
-- [ ] AI uses pathfinding instead of greedy chase-only movement
 
-**Module:** `RogueEngine.Toolkit` (initial assembly: FOV + Pathfinding)
+**Module:** `RogueEngine.Toolkit` (FOV + Pathfinding)
 
 ---
 
@@ -144,20 +145,20 @@ Systems from the architecture spec not yet implemented:
 
 Dedicated C# library to **maximize ease of use** for game creators. Full spec: [`docs/planning/WORLD_TOOLKIT.md`](planning/WORLD_TOOLKIT.md).
 
-- [ ] Create `RogueEngine.Toolkit` project (Engine-only deps)
-- [ ] `IMapGenerator` plug-in interface + `GeneratorRegistry`
-- [ ] Migrate `DungeonGenerator` → `rooms_corridors` algorithm
-- [ ] **Cellular automata** cave generator
+- [x] Create `RogueEngine.Toolkit` project (Engine-only deps)
+- [x] `IMapGenerator` plug-in interface + `GeneratorRegistry`
+- [x] Migrate `DungeonGenerator` → `rooms_corridors` algorithm
+- [x] **Cellular automata** cave generator
 - [ ] **Drunkard’s walk** tunnel generator
-- [ ] **BSP** room generator
-- [ ] **Hybrid** cave + rooms generator
+- [x] **BSP** room generator
+- [x] **Hybrid** cave + rooms generator
 - [ ] **Noise** terrain layer (Perlin/Simplex) for outdoor maps
-- [ ] **Tile bitmask** (4/8-bit) + tileset JSON + autotile resolver
-- [ ] **Overworld** cell graph (regions, connections, biomes, local map per cell)
-- [ ] `Data/generators/*.json` schema + loader
-- [ ] Helper API: `ActorSpawner`, `MapCarver`, `MapQueries`, `RandomPlacement`, `SeedHelper`
-- [ ] Sample game using cellular caves + bitmask walls
-- [ ] Sample game using overworld travel between zones
+- [x] **Tile bitmask** (4/8-bit) + tileset JSON + autotile resolver
+- [x] **Overworld** cell graph (regions, connections, biomes, local map per cell)
+- [x] `Data/generators/*.json` schema + loader
+- [x] Helper API: `MapCarver`, `MapQueries`, `RandomPlacement`, `SeedHelper`
+- [x] Sample game using cellular caves + bitmask walls (`templates/CavesOverworldDemo/`)
+- [x] Sample game using overworld travel between zones (`templates/CavesOverworldDemo/`)
 
 **Algorithms available to user:** pick via JSON `algorithm` field or register custom `IMapGenerator` in scripts.
 
@@ -167,8 +168,8 @@ Dedicated C# library to **maximize ease of use** for game creators. Full spec: [
 
 - [ ] Overworld graph editor (cells + connections visual)
 - [ ] Tile bitmask preview / tile painter
-- [ ] Generator parameter UI (sliders for fill %, smooth passes, etc.)
-- [ ] Live seed preview (regenerate map in editor)
+- [x] Generator parameter UI (sliders for fill %, smooth passes, etc.)
+- [x] Live seed preview (regenerate map in editor)
 
 ---
 
@@ -201,11 +202,11 @@ The MVP is **done** when all items below pass:
 
 | ID | Criterion | Phase |
 |----|-----------|-------|
-| CA-13 | Player FOV hides unseen tiles; explored tiles remembered | 8 |
-| CA-14 | Enemy reaches player via A* around obstacles | 8 |
-| CA-15 | Pick dungeon algorithm from JSON (`cellular_caves`, `bsp_dungeon`, etc.) | 9 |
-| CA-16 | Wall tiles autotile via bitmask tileset | 9 |
-| CA-17 | Overworld with ≥3 connected regions; enter region loads local map | 9 |
+| CA-13 | Player FOV hides unseen tiles; explored tiles remembered | 8 | Done |
+| CA-14 | Enemy reaches player via A* around obstacles | 8 | Done |
+| CA-15 | Pick dungeon algorithm from JSON (`cellular_caves`, `bsp_dungeon`, etc.) | 9 | Done |
+| CA-16 | Wall tiles autotile via bitmask tileset | 9 | Done |
+| CA-17 | Overworld with ≥3 connected regions; enter region loads local map | 9 | Done |
 | CA-18 | Editor: create project, pick generator, playtest without manual JSON editing | 6 |
 | CA-19 | Custom `IMapGenerator` registrable from game script | 9 |
 
@@ -232,8 +233,8 @@ Priority-ordered items from the architecture specification. Check off when merge
 | BT-13 | Minimal Avalonia editor | Medium | 6 |
 | BT-14 | Visual scripting MVP | Low/Medium | 7 |
 | BT-15 | WiX installer | Low | 11 |
-| BT-16 | FOV (shadowcasting) | High | 8 |
-| BT-17 | A* pathfinding on grid | High | 8 |
+| BT-16 | FOV (shadowcasting) | High | 8 | Done |
+| BT-17 | A* pathfinding on grid | High | 8 | Done |
 | BT-18 | Dijkstra map for AI | Medium | 8 |
 | BT-19 | Items & inventory JSON + systems | Medium | 8 |
 | BT-20 | `RogueEngine.Toolkit` assembly scaffold | High | 9 |
@@ -243,13 +244,13 @@ Priority-ordered items from the architecture specification. Check off when merge
 | BT-24 | BSP dungeon generator | Medium | 9 |
 | BT-25 | Tile bitmask + tileset JSON + autotile | High | 9 |
 | BT-26 | Noise terrain generator | Medium | 9 |
-| BT-27 | Overworld cell graph + loader | High | 9 |
-| BT-28 | `Data/generators/*.json` schema | High | 9 |
-| BT-29 | Toolkit helper API (spawn, carve, queries) | Medium | 9 |
-| BT-30 | Editor generator picker + parameter UI | Medium | 6/10 |
+| BT-27 | Overworld cell graph + loader | High | 9 | Done |
+| BT-28 | `Data/generators/*.json` schema | High | 9 | Done |
+| BT-29 | Toolkit helper API (spawn, carve, queries) | Medium | 9 | Done |
+| BT-30 | Editor generator picker + parameter UI | Medium | 6/10 | Done |
 | BT-31 | Editor overworld graph view | Low | 10 |
-| BT-32 | Sample: caves + bitmask template | Medium | 9 |
-| BT-33 | Sample: overworld multi-zone game | Medium | 9 |
+| BT-32 | Sample: caves + bitmask template | Medium | 9 | Done |
+| BT-33 | Sample: overworld multi-zone game | Medium | 9 | Done |
 
 ---
 
@@ -263,9 +264,9 @@ Priority-ordered items from the architecture specification. Check off when merge
 - [x] This roadmap
 - [x] .NET solution (`RogueEngine.sln`)
 - [x] First passing engine unit test
-- [ ] `RogueEngine.Toolkit` project scaffold
+- [x] `RogueEngine.Toolkit` project scaffold
 - [x] World Toolkit planning spec ([`docs/planning/WORLD_TOOLKIT.md`](planning/WORLD_TOOLKIT.md))
-- [ ] Second sample game (procgen variety showcase)
+- [x] Second sample game (procgen variety showcase — `templates/CavesOverworldDemo/`)
 
 ---
 

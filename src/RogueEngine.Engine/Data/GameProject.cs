@@ -6,4 +6,6 @@ public sealed class GameProject
     public string Version { get; init; } = string.Empty;
     public string DataPath { get; init; } = "Data";
     public string? DefaultGenerator { get; init; }
+    public string? DefaultScene { get; init; }
+    public string? DefaultOverworld { get; init; }
 }

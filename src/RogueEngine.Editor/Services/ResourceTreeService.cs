@@ -10,7 +10,7 @@ public sealed class ResourceTreeService
         {
             Id = "root",
             Title = project.Name,
-            Icon = "📁",
+            Icon = string.Empty,
             Kind = EditorResourceKind.Folder,
             IsSelectable = false
         };
@@ -19,18 +19,18 @@ public sealed class ResourceTreeService
         {
             Id = "settings",
             Title = "Project Settings",
-            Icon = "⚙",
+            Icon = "[.]",
             Kind = EditorResourceKind.ProjectSettings
         });
 
-        var scenesFolder = CreateFolder("scenes", "Scenes", "🎬");
+        var scenesFolder = CreateFolder("scenes", "Scenes");
         foreach (var scene in project.Scenes.OrderBy(scene => scene.Name, StringComparer.OrdinalIgnoreCase))
         {
             scenesFolder.Children.Add(new EditorResourceNode
             {
                 Id = $"scene:{scene.Id}",
                 Title = scene.Name,
-                Icon = "🗺",
+                Icon = "[S]",
                 Kind = EditorResourceKind.Scene,
                 Payload = scene.Id
             });
@@ -39,14 +39,13 @@ public sealed class ResourceTreeService
         scenesFolder.Children.Add(new EditorResourceNode
         {
             Id = "add-scene",
-            Title = "Add Scene…",
-            Icon = "➕",
-            Kind = EditorResourceKind.AddNew,
-            IsPlaceholder = true
+            Title = "Add scene…",
+            Icon = "+",
+            Kind = EditorResourceKind.AddNew
         });
         root.Children.Add(scenesFolder);
 
-        var actorsFolder = CreateFolder("actors", "Actors", "👾");
+        var actorsFolder = CreateFolder("actors", "Actors");
         foreach (var actor in project.Actors.OrderBy(actor => actor.Id, StringComparer.OrdinalIgnoreCase))
         {
             actorsFolder.Children.Add(new EditorResourceNode
@@ -62,25 +61,57 @@ public sealed class ResourceTreeService
         actorsFolder.Children.Add(new EditorResourceNode
         {
             Id = "add-actor",
-            Title = "Add Actor…",
-            Icon = "➕",
-            Kind = EditorResourceKind.AddNew,
-            IsPlaceholder = true
+            Title = "Add actor…",
+            Icon = "+",
+            Kind = EditorResourceKind.AddNew
         });
         root.Children.Add(actorsFolder);
 
-        root.Children.Add(CreatePlaceholderFolder("items", "Items", "📦", "Phase 8"));
-        root.Children.Add(CreatePlaceholderFolder("sprites", "Sprites", "🎨", "Phase E3"));
-        root.Children.Add(CreatePlaceholderFolder("tilesets", "Tilesets", "🧱", "Phase 9"));
+        root.Children.Add(CreatePlaceholderFolder("sprites", "Sprites", "E3"));
+        root.Children.Add(CreatePlaceholderFolder("tilesets", "Tilesets", "E3"));
 
-        var scriptsFolder = CreateFolder("scripts", "Scripts", "📜");
+        var itemsFolder = CreateFolder("items", "Items");
+        foreach (var item in project.Items.OrderBy(item => item.Id, StringComparer.OrdinalIgnoreCase))
+        {
+            itemsFolder.Children.Add(new EditorResourceNode
+            {
+                Id = $"item:{item.Id}",
+                Title = item.Name,
+                Icon = item.Glyph.ToString(),
+                Kind = EditorResourceKind.Item,
+                Payload = item.Id
+            });
+        }
+
+        itemsFolder.Children.Add(new EditorResourceNode
+        {
+            Id = "add-item",
+            Title = "Add item…",
+            Icon = "+",
+            Kind = EditorResourceKind.AddNew
+        });
+        root.Children.Add(itemsFolder);
+
+        if (project.Overworld is not null)
+        {
+            root.Children.Add(new EditorResourceNode
+            {
+                Id = "overworld",
+                Title = project.Overworld.Id,
+                Icon = "[W]",
+                Kind = EditorResourceKind.Overworld,
+                Payload = project.Overworld.Id
+            });
+        }
+
+        var scriptsFolder = CreateFolder("scripts", "Scripts");
         foreach (var script in project.ScriptFiles.OrderBy(script => script.FileName, StringComparer.OrdinalIgnoreCase))
         {
             scriptsFolder.Children.Add(new EditorResourceNode
             {
                 Id = $"script:{script.FileName}",
                 Title = script.FileName,
-                Icon = "C#",
+                Icon = "[C#]",
                 Kind = EditorResourceKind.CodeScript,
                 Payload = script.FullPath
             });
@@ -88,14 +119,14 @@ public sealed class ResourceTreeService
 
         root.Children.Add(scriptsFolder);
 
-        var visualFolder = CreateFolder("visual", "Visual Scripts", "🧠");
+        var visualFolder = CreateFolder("visual", "Visual Scripts");
         foreach (var graph in project.VisualGraphs.OrderBy(graph => graph.Id, StringComparer.OrdinalIgnoreCase))
         {
             visualFolder.Children.Add(new EditorResourceNode
             {
                 Id = $"visual:{graph.Id}",
                 Title = graph.Id,
-                Icon = "◇",
+                Icon = "[V]",
                 Kind = EditorResourceKind.VisualScript,
                 Payload = graph.Id
             });
@@ -104,10 +135,9 @@ public sealed class ResourceTreeService
         visualFolder.Children.Add(new EditorResourceNode
         {
             Id = "add-visual",
-            Title = "Add Visual Script…",
-            Icon = "➕",
-            Kind = EditorResourceKind.AddNew,
-            IsPlaceholder = true
+            Title = "Add visual script…",
+            Icon = "+",
+            Kind = EditorResourceKind.AddNew
         });
         root.Children.Add(visualFolder);
 
@@ -115,7 +145,7 @@ public sealed class ResourceTreeService
         {
             Id = "generator",
             Title = project.Generator.Id,
-            Icon = "🗺",
+            Icon = "[G]",
             Kind = EditorResourceKind.Generator,
             Payload = project.Generator.Id
         });
@@ -123,20 +153,20 @@ public sealed class ResourceTreeService
         return [root];
     }
 
-    private static EditorResourceNode CreateFolder(string id, string title, string icon) => new()
+    private static EditorResourceNode CreateFolder(string id, string title) => new()
     {
         Id = id,
         Title = title,
-        Icon = icon,
+        Icon = string.Empty,
         Kind = EditorResourceKind.Folder,
         IsSelectable = false
     };
 
-    private static EditorResourceNode CreatePlaceholderFolder(string id, string title, string icon, string phase) => new()
+    private static EditorResourceNode CreatePlaceholderFolder(string id, string title, string phase) => new()
     {
         Id = id,
         Title = title,
-        Icon = icon,
+        Icon = string.Empty,
         Kind = EditorResourceKind.Folder,
         IsSelectable = false,
         Children =
@@ -144,8 +174,8 @@ public sealed class ResourceTreeService
             new EditorResourceNode
             {
                 Id = $"{id}-soon",
-                Title = $"Coming in {phase}",
-                Icon = "⏳",
+                Title = $"Planned ({phase})",
+                Icon = "—",
                 Kind = EditorResourceKind.Folder,
                 IsSelectable = false,
                 IsPlaceholder = true

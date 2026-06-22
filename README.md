@@ -2,7 +2,7 @@
 
 A specialized 2D tile-based roguelike engine in C#. RogueEngine is not a general-purpose game engine like Unity or Godot — it focuses on a narrower domain: grid maps, entities, turn-based gameplay, procedural generation, field of view, pathfinding, gameplay scripts, and exporting finished games as executables or installers.
 
-**Status:** v0.7 — visual scripting MVP (graph JSON → C# → Roslyn compile). World Toolkit planned for v0.9.
+**Status:** v0.9 — items/inventory, World Toolkit (pluggable generators, bitmask autotile, overworld MVP), editor item & generator UI.
 
 ## What is this?
 
@@ -31,7 +31,7 @@ See the full architecture diagram in [docs/rendered/01_contexto_arquitetura.svg]
 | Path | Purpose |
 |------|---------|
 | `src/RogueEngine.Engine/` | Core game rules — world, entities, systems, save/load. No UI dependencies. |
-| `src/RogueEngine.Toolkit/` | ProcGen algorithms, tile bitmask/autotile, overworld graphs, FOV, pathfinding, helper APIs (planned). |
+| `src/RogueEngine.Toolkit/` | FOV, pathfinding, procgen, bitmask autotile, overworld helpers. |
 | `src/RogueEngine.SadConsole/` | Renderer and input adapter for SadConsole. |
 | `src/RogueEngine.Runtime/` | Application that loads and runs a game project. |
 | `src/RogueEngine.Editor/` | Desktop editor for creating and configuring projects (Avalonia). |

@@ -1,0 +1,12 @@
+{
+  "id": "bsp_dungeon",
+  "algorithm": "bsp_dungeon",
+  "width": 60,
+  "height": 18,
+  "parameters": {
+    "minRoomSize": 4,
+    "maxRoomSize": 10,
+    "splitDepth": 4,
+    "tileset": "tilesets/stone_walls.json"
+  }
+}

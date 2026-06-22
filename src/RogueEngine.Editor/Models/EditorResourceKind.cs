@@ -12,6 +12,7 @@ public enum EditorResourceKind
     CodeScript,
     VisualScript,
     Generator,
+    Overworld,
     AddNew
 }
 
@@ -21,6 +22,8 @@ public enum EditorDocumentKind
     Scene,
     Actor,
     Generator,
+    Item,
+    Overworld,
     VisualScript,
     CodeScript,
     Welcome

@@ -1,3 +1,4 @@
+using RogueEngine.Engine.Commands;
 using RogueEngine.Engine.Components;
 using RogueEngine.Engine.Core;
 using RogueEngine.Engine.Data;
@@ -5,6 +6,8 @@ using RogueEngine.Engine.Rendering;
 using RogueEngine.Engine.TurnBased;
 using RogueEngine.SadConsole.Input;
 using RogueEngine.SadConsole.Rendering;
+using RogueEngine.Toolkit.Fov;
+using RogueEngine.Toolkit.Overworld;
 using SadConsole;
 using SadConsole.Input;
 
@@ -12,11 +15,21 @@ namespace RogueEngine.Runtime;
 
 internal sealed class GameScreen : ScreenObject
 {
+    private const int FovRadius = 10;
+
+    private enum GameMode
+    {
+        Overworld,
+        Dungeon
+    }
+
     private LoadedProject _project;
     private World _world;
     private Entity _player;
     private TurnManager _turnManager;
     private int _seed;
+    private GameMode _mode;
+    private OverworldService? _overworldService;
     private readonly ScreenSurface _mapSurface;
     private readonly IRenderer _mapRenderer;
     private readonly MessagePanel _messagePanel;
@@ -24,14 +37,10 @@ internal sealed class GameScreen : ScreenObject
     public GameScreen()
     {
         _project = RuntimeBootstrap.Project;
+        var initialSetup = CreateInitialSetup();
+        ApplySetup(initialSetup);
 
-        var initialSetup = WorldBuilder.CreateNewGame(_project, RuntimeBootstrap.Scripts);
-        _world = initialSetup.World;
-        _player = initialSetup.Player;
-        _turnManager = initialSetup.TurnManager;
-        _seed = initialSetup.Seed;
-
-        _mapSurface = new ScreenSurface(_project.Settings.MapWidth, _project.Settings.MapHeight)
+        _mapSurface = new ScreenSurface(_world.Map.Width, _world.Map.Height)
         {
             UseMouse = false,
             Position = new Point(0, 0)
@@ -39,14 +48,33 @@ internal sealed class GameScreen : ScreenObject
 
         _mapRenderer = new SadConsoleMapRenderer(_mapSurface);
         _messagePanel = new MessagePanel(
-            _project.Settings.MapWidth,
+            _world.Map.Width,
             _project.Settings.MessagePanelHeight,
-            _project.Settings.MapHeight);
+            _world.Map.Height);
 
         Children.Add(_mapSurface);
         Children.Add(_messagePanel.Surface);
 
+        if (_mode == GameMode.Dungeon)
+        {
+            UpdateFieldOfView();
+        }
+
         RenderAll();
+    }
+
+    private GameSetup CreateInitialSetup()
+    {
+        if (_project.DefaultOverworld is not null &&
+            string.IsNullOrWhiteSpace(_project.Project.DefaultScene))
+        {
+            _mode = GameMode.Overworld;
+            _overworldService = new OverworldService(_project.DefaultOverworld);
+            return WorldBuilder.CreateOverworldGame(_project, RuntimeBootstrap.Scripts);
+        }
+
+        _mode = GameMode.Dungeon;
+        return WorldBuilder.CreateNewGame(_project, RuntimeBootstrap.Scripts);
     }
 
     public override bool ProcessKeyboard(Keyboard keyboard)
@@ -68,12 +96,26 @@ internal sealed class GameScreen : ScreenObject
             return base.ProcessKeyboard(keyboard);
         }
 
+        if (TryHandleItemInput(keyboard))
+        {
+            RenderAll();
+            return true;
+        }
+
+        if (_mode == GameMode.Overworld && keyboard.IsKeyPressed(Keys.Enter))
+        {
+            TryEnterOverworldCell();
+            RenderAll();
+            return true;
+        }
+
         var command = InputHandler.GetMoveCommand(keyboard, _player);
         if (command is not null)
         {
             var acted = command.Execute(_world);
-            if (acted)
+            if (acted && _mode == GameMode.Dungeon)
             {
+                UpdateFieldOfView();
                 _turnManager.RunEnemyTurns(_world);
             }
 
@@ -82,6 +124,69 @@ internal sealed class GameScreen : ScreenObject
         }
 
         return base.ProcessKeyboard(keyboard);
+    }
+
+    private bool TryHandleItemInput(Keyboard keyboard)
+    {
+        if (keyboard.IsKeyPressed(Keys.G))
+        {
+            return new PickupCommand(_player).Execute(_world);
+        }
+
+        for (var slot = 1; slot <= 9; slot++)
+        {
+            var key = (Keys)((int)Keys.D1 + slot - 1);
+            if (!keyboard.IsKeyPressed(key))
+            {
+                continue;
+            }
+
+            if (keyboard.IsKeyDown(Keys.U))
+            {
+                return new UseItemCommand(_player, slot).Execute(_world, _project.Items);
+            }
+
+            if (keyboard.IsKeyDown(Keys.E))
+            {
+                return new EquipItemCommand(_player, slot).Execute(_world, _project.Items);
+            }
+        }
+
+        return false;
+    }
+
+    private void TryEnterOverworldCell()
+    {
+        if (_overworldService is null ||
+            !_player.TryGetComponent<PositionComponent>(out var position) ||
+            position is null)
+        {
+            return;
+        }
+
+        var cell = _overworldService.GetCellAt(_world.Map, position.Position);
+        if (cell is null)
+        {
+            _world.Log.Add("No region here.");
+            return;
+        }
+
+        _mode = GameMode.Dungeon;
+        _seed = Random.Shared.Next();
+        ApplySetup(WorldBuilder.CreateDungeonFromCell(_project, cell, RuntimeBootstrap.Scripts, _seed));
+        UpdateFieldOfView();
+        _world.Log.Add("Press G to pick up items, U+1-9 to use, E+1-9 to equip.");
+    }
+
+    private void UpdateFieldOfView()
+    {
+        if (!_player.TryGetComponent<PositionComponent>(out var positionComponent) || positionComponent is null)
+        {
+            return;
+        }
+
+        var visible = FovCalculator.Compute(_world.Map, positionComponent.Position, FovRadius);
+        _world.Visibility.ApplyVisible(visible);
     }
 
     private void SaveGame()
@@ -100,7 +205,9 @@ internal sealed class GameScreen : ScreenObject
             return;
         }
 
+        _mode = GameMode.Dungeon;
         ApplySetup(WorldBuilder.CreateFromSave(_project, saveData, RuntimeBootstrap.Scripts));
+        UpdateFieldOfView();
         RenderAll();
     }
 
