@@ -1,0 +1,9 @@
+{
+  "name": "RpgDemo",
+  "version": "1",
+  "dataPath": "Data",
+  "defaultGenerator": "generators/dungeon.json",
+  "defaultScene": "scenes/main.scene.json",
+  "defaultClass": "warrior",
+  "startQuests": ["goblin_hunt"]
+}

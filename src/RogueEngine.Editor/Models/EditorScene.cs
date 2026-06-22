@@ -15,6 +15,7 @@ public sealed class EditorScene
     public int? PlayerSpawnY { get; set; }
     public List<EditorSceneEntity> Entities { get; set; } = [];
     public List<EditorSceneItem> ItemPlacements { get; set; } = [];
+    public List<EditorSceneInteraction> InteractionPlacements { get; set; } = [];
 
     public static EditorScene FromEngine(SceneDefinition scene, string fileName) => new()
     {
@@ -42,6 +43,14 @@ public sealed class EditorScene
                 X = item.X,
                 Y = item.Y,
                 Count = item.Count
+            })
+            .ToList(),
+        InteractionPlacements = scene.Interactions
+            .Select(interaction => new EditorSceneInteraction
+            {
+                InteractionId = interaction.InteractionId,
+                X = interaction.X,
+                Y = interaction.Y
             })
             .ToList()
     };
@@ -71,6 +80,14 @@ public sealed class EditorScene
                 X = item.X,
                 Y = item.Y,
                 Count = item.Count
+            })
+            .ToList(),
+        Interactions = InteractionPlacements
+            .Select(interaction => new SceneInteractionPlacement
+            {
+                InteractionId = interaction.InteractionId,
+                X = interaction.X,
+                Y = interaction.Y
             })
             .ToList()
     };

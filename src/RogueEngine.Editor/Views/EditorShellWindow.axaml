@@ -113,6 +113,14 @@
                   <TextBlock Grid.Column="0" Text="Max enemies" VerticalAlignment="Center" />
                   <NumericUpDown Grid.Column="1" Minimum="0" Maximum="50" Value="{Binding MaxEnemies}" />
                 </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Default class" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding DefaultClassId}" Watermark="warrior" />
+                </Grid>
+                <Grid ColumnDefinitions="140,*">
+                  <TextBlock Grid.Column="0" Text="Start quests" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding StartQuestsText}" Watermark="goblin_hunt" />
+                </Grid>
               </StackPanel>
             </ScrollViewer>
 
@@ -133,12 +141,13 @@
                   <TextBlock Grid.Column="4" Text="H" VerticalAlignment="Center" Margin="10,0,0,0" />
                   <NumericUpDown Grid.Column="5" Minimum="10" Maximum="100" Value="{Binding SceneHeight}" />
                 </Grid>
-                <TextBlock Text="Shift+click sets player spawn. Actor combo places enemies; item combo places pickups." FontSize="11" Foreground="#9a9a9f" />
+                <TextBlock Text="Shift+click sets player spawn. Combos place actors, items, or interactions." FontSize="11" Foreground="#9a9a9f" />
               </StackPanel>
               <controls:SceneMapViewport x:Name="SceneViewport" Grid.Row="1" Margin="0,8,0,0"
                                          Scene="{Binding SelectedScene}"
                                          Actors="{Binding Actors}"
                                          Items="{Binding Items}"
+                                         Interactions="{Binding Interactions}"
                                          Map="{Binding ScenePreviewMap}" />
             </Grid>
 
@@ -278,9 +287,115 @@
                   <TextBlock Grid.Column="0" Text="Heal on use" VerticalAlignment="Center" />
                   <NumericUpDown Grid.Column="1" Minimum="0" Maximum="999" Value="{Binding ItemHealOnUse}" />
                 </Grid>
+                <Grid ColumnDefinitions="120,*,*,*">
+                  <TextBlock Grid.Column="0" Text="Stats" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="0" Maximum="99" Value="{Binding ItemStatAttack}" Watermark="ATK" />
+                  <NumericUpDown Grid.Column="2" Minimum="0" Maximum="99" Value="{Binding ItemStatDefense}" Margin="4,0" Watermark="DEF" />
+                </Grid>
+                <Grid ColumnDefinitions="120,*">
+                  <TextBlock Grid.Column="0" Text="Key ID" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding ItemKeyId}" Watermark="iron_key" />
+                </Grid>
+                <Grid ColumnDefinitions="120,*">
+                  <TextBlock Grid.Column="0" Text="On-use effect" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding ItemOnUseEffect}" Watermark="heal / damage / buff" />
+                </Grid>
+                <Grid ColumnDefinitions="120,*">
+                  <TextBlock Grid.Column="0" Text="On-use amount" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="0" Maximum="999" Value="{Binding ItemOnUseAmount}" />
+                </Grid>
+                <Grid ColumnDefinitions="120,*">
+                  <TextBlock Grid.Column="0" Text="On-use script" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding ItemOnUseScript}" />
+                </Grid>
                 <StackPanel Orientation="Horizontal" Spacing="6">
                   <Button Content="Add item" Command="{Binding AddItemCommand}" />
                   <Button Content="Remove" Command="{Binding RemoveItemCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer IsVisible="{Binding IsInteractionDocument}">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Interaction" FontSize="18" FontWeight="SemiBold" />
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="ID" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding InteractionId}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Kind" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding InteractionKind}" Watermark="door / stairs / use / script" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Required key" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding InteractionRequiredKeyId}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Target scene" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding InteractionTargetScene}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Message" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding InteractionMessage}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Script" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding InteractionScript}" /></Grid>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Button Content="Add interaction" Command="{Binding AddInteractionCommand}" />
+                  <Button Content="Remove" Command="{Binding RemoveInteractionCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer IsVisible="{Binding IsClassDocument}">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Class" FontSize="18" FontWeight="SemiBold" />
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="ID" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding ClassId}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Name" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding ClassName}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Base max HP" VerticalAlignment="Center" /><NumericUpDown Grid.Column="1" Minimum="1" Maximum="999" Value="{Binding ClassBaseMaxHp}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Player actor" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding ClassPlayerActorId}" /></Grid>
+                <Grid ColumnDefinitions="120,*,*,*">
+                  <TextBlock Grid.Column="0" Text="Bonuses" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="0" Maximum="99" Value="{Binding ClassStatAttack}" />
+                  <NumericUpDown Grid.Column="2" Minimum="0" Maximum="99" Value="{Binding ClassStatDefense}" Margin="4,0" />
+                  <NumericUpDown Grid.Column="3" Minimum="0" Maximum="99" Value="{Binding ClassStatMaxHp}" />
+                </Grid>
+                <TextBlock Text="Start items" FontWeight="SemiBold" />
+                <ListBox ItemsSource="{Binding ClassStartItems}" SelectedItem="{Binding SelectedClassStartItem}" Height="100" />
+                <Grid ColumnDefinitions="120,*,80,*">
+                  <TextBlock Grid.Column="0" Text="Item ID" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding ClassStartItemId}" />
+                  <TextBlock Grid.Column="2" Text="Count" VerticalAlignment="Center" Margin="8,0,0,0" />
+                  <NumericUpDown Grid.Column="3" Minimum="1" Maximum="99" Value="{Binding ClassStartItemCount}" />
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Button Content="Add start item" Command="{Binding AddClassStartItemCommand}" />
+                  <Button Content="Remove start item" Command="{Binding RemoveClassStartItemCommand}" />
+                  <Button Content="Remove class" Command="{Binding RemoveClassCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </ScrollViewer>
+
+            <ScrollViewer IsVisible="{Binding IsQuestDocument}">
+              <StackPanel Spacing="10">
+                <TextBlock Text="Quest" FontSize="18" FontWeight="SemiBold" />
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="ID" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding QuestId}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Title" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding QuestTitle}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="On complete" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding QuestOnCompleteScript}" /></Grid>
+                <TextBlock Text="Objectives" FontWeight="SemiBold" />
+                <ListBox ItemsSource="{Binding QuestObjectives}" SelectedItem="{Binding SelectedQuestObjective}" Height="100" />
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Type" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding QuestObjectiveType}" Watermark="kill / collect / reach_cell / script" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Actor ID" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding QuestObjectiveActorId}" /></Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Item ID" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding QuestObjectiveItemId}" /></Grid>
+                <Grid ColumnDefinitions="120,*,80,*,80,*">
+                  <TextBlock Grid.Column="0" Text="Count" VerticalAlignment="Center" />
+                  <NumericUpDown Grid.Column="1" Minimum="1" Maximum="99" Value="{Binding QuestObjectiveCount}" />
+                  <TextBlock Grid.Column="2" Text="X" VerticalAlignment="Center" Margin="8,0,0,0" />
+                  <NumericUpDown Grid.Column="3" Minimum="0" Maximum="200" Value="{Binding QuestObjectiveX}" />
+                  <TextBlock Grid.Column="4" Text="Y" VerticalAlignment="Center" Margin="8,0,0,0" />
+                  <NumericUpDown Grid.Column="5" Minimum="0" Maximum="100" Value="{Binding QuestObjectiveY}" />
+                </Grid>
+                <Grid ColumnDefinitions="120,*"><TextBlock Grid.Column="0" Text="Script" VerticalAlignment="Center" /><TextBox Grid.Column="1" Text="{Binding QuestObjectiveScript}" /></Grid>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Button Content="Add objective" Command="{Binding AddQuestObjectiveCommand}" />
+                  <Button Content="Remove objective" Command="{Binding RemoveQuestObjectiveCommand}" />
+                </StackPanel>
+                <TextBlock Text="Rewards" FontWeight="SemiBold" Margin="0,8,0,0" />
+                <ListBox ItemsSource="{Binding QuestRewards}" SelectedItem="{Binding SelectedQuestReward}" Height="80" />
+                <Grid ColumnDefinitions="120,*,80,*">
+                  <TextBlock Grid.Column="0" Text="Item ID" VerticalAlignment="Center" />
+                  <TextBox Grid.Column="1" Text="{Binding QuestRewardItemId}" />
+                  <TextBlock Grid.Column="2" Text="Count" VerticalAlignment="Center" Margin="8,0,0,0" />
+                  <NumericUpDown Grid.Column="3" Minimum="1" Maximum="99" Value="{Binding QuestRewardCount}" />
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <Button Content="Add reward" Command="{Binding AddQuestRewardCommand}" />
+                  <Button Content="Remove reward" Command="{Binding RemoveQuestRewardCommand}" />
+                  <Button Content="Remove quest" Command="{Binding RemoveQuestCommand}" />
                 </StackPanel>
               </StackPanel>
             </ScrollViewer>

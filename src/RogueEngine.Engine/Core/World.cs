@@ -1,4 +1,5 @@
 using RogueEngine.Engine.Components;
+using RogueEngine.Engine.Rules;
 
 namespace RogueEngine.Engine.Core;
 
@@ -7,6 +8,7 @@ public sealed class World
     public TileMap Map { get; }
     public MapVisibility Visibility { get; }
     public MessageLog Log { get; } = new();
+    public GameRulesContext? Rules { get; set; }
 
     private readonly List<Entity> _entities = [];
 
@@ -91,7 +93,15 @@ public sealed class World
             return false;
         }
 
+        var from = positionComponent.Position;
         positionComponent.Position = newPosition;
+        Raise(new EntityMovedEvent(entity, from, newPosition));
         return true;
+    }
+
+    public void Raise(GameEvent gameEvent)
+    {
+        ArgumentNullException.ThrowIfNull(gameEvent);
+        Rules?.HandleEvent(this, gameEvent);
     }
 }

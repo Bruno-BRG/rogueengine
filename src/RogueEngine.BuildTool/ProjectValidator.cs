@@ -20,6 +20,7 @@ public static class ProjectValidator
         {
             var project = ProjectLoader.Load(reprojPath);
             ValidateActors(project, errors);
+            ValidateGameRules(project, errors);
             ValidateScripts(project, errors);
 
             if (errors.Count > 0)
@@ -60,6 +61,59 @@ public static class ProjectValidator
                 {
                     errors.Add(
                         $"Actor '{actor.Id}' references behavior '{actor.Behavior}', but no Scripts/ or matching visual script was found.");
+                }
+            }
+        }
+    }
+
+    private static void ValidateGameRules(LoadedProject project, List<string> errors)
+    {
+        foreach (var quest in project.Quests.Values)
+        {
+            foreach (var objective in quest.Objectives)
+            {
+                if (string.Equals(objective.Type, "kill", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(objective.ActorId) &&
+                    !project.Actors.ContainsKey(objective.ActorId))
+                {
+                    errors.Add($"Quest '{quest.Id}' references unknown actor '{objective.ActorId}'.");
+                }
+
+                if (string.Equals(objective.Type, "collect", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(objective.ItemId) &&
+                    !project.Items.ContainsKey(objective.ItemId))
+                {
+                    errors.Add($"Quest '{quest.Id}' references unknown item '{objective.ItemId}'.");
+                }
+            }
+
+            foreach (var reward in quest.Rewards)
+            {
+                if (!project.Items.ContainsKey(reward.ItemId))
+                {
+                    errors.Add($"Quest '{quest.Id}' reward references unknown item '{reward.ItemId}'.");
+                }
+            }
+        }
+
+        foreach (var scene in SceneLoader.LoadAllFromDirectory(project.ScenesDirectory))
+        {
+            foreach (var placement in scene.Interactions)
+            {
+                if (!project.Interactions.ContainsKey(placement.InteractionId))
+                {
+                    errors.Add($"Scene '{scene.Id}' references unknown interaction '{placement.InteractionId}'.");
+                }
+            }
+        }
+
+        foreach (var classDef in project.Classes.Values)
+        {
+            foreach (var startItem in classDef.StartItems)
+            {
+                if (!project.Items.ContainsKey(startItem.ItemId))
+                {
+                    errors.Add($"Class '{classDef.Id}' start item references unknown item '{startItem.ItemId}'.");
                 }
             }
         }

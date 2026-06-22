@@ -32,6 +32,8 @@ public partial class EditorShellWindow : Window
         SceneViewport.EntityRemoved += (_, _) => viewModel.OnSceneViewportChanged();
         SceneViewport.ItemPlaced += (_, _) => viewModel.OnSceneViewportChanged();
         SceneViewport.ItemRemoved += (_, _) => viewModel.OnSceneViewportChanged();
+        SceneViewport.InteractionPlaced += (_, _) => viewModel.OnSceneViewportChanged();
+        SceneViewport.InteractionRemoved += (_, _) => viewModel.OnSceneViewportChanged();
         SceneViewport.PlayerSpawnChanged += (_, _) => viewModel.OnSceneViewportChanged();
 
         viewModel.PropertyChanged += (_, args) =>
@@ -44,6 +46,11 @@ public partial class EditorShellWindow : Window
             if (args.PropertyName is nameof(EditorShellViewModel.Items) or nameof(EditorShellViewModel.SelectedScene))
             {
                 SceneViewport.RefreshPlaceItemCombo();
+            }
+
+            if (args.PropertyName is nameof(EditorShellViewModel.Interactions) or nameof(EditorShellViewModel.SelectedScene))
+            {
+                SceneViewport.RefreshPlaceInteractionCombo();
             }
         };
     }

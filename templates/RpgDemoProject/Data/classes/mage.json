@@ -1,0 +1,9 @@
+{
+  "id": "mage",
+  "name": "Mage",
+  "baseMaxHp": 18,
+  "statBonuses": { "attack": 0, "defense": 0, "maxHp": 0 },
+  "startItems": [
+    { "itemId": "health_potion", "count": 2 }
+  ]
+}

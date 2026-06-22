@@ -1,0 +1,9 @@
+{
+  "id": "rusty_sword",
+  "name": "Rusty Sword",
+  "glyph": "/",
+  "color": { "r": 180, "g": 180, "b": 190 },
+  "kind": "equipment",
+  "equipSlot": "weapon",
+  "stats": { "attack": 2 }
+}

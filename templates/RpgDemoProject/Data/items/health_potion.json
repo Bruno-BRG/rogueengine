@@ -1,0 +1,9 @@
+{
+  "id": "health_potion",
+  "name": "Health Potion",
+  "glyph": "!",
+  "color": { "r": 200, "g": 50, "b": 50 },
+  "kind": "consumable",
+  "maxStack": 5,
+  "onUse": { "effect": "heal", "amount": 5 }
+}

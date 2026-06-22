@@ -13,9 +13,14 @@ public sealed class EditorProject
     public string DefaultGeneratorPath { get; set; } = "generators/dungeon.json";
     public string? DefaultScenePath { get; set; }
     public string? DefaultOverworldPath { get; set; }
+    public string? DefaultClassId { get; set; }
+    public string StartQuestsText { get; set; } = string.Empty;
     public EditorSettings Settings { get; set; } = new();
     public List<EditorActor> Actors { get; set; } = [];
     public List<EditorItem> Items { get; set; } = [];
+    public List<EditorInteraction> Interactions { get; set; } = [];
+    public List<EditorClass> Classes { get; set; } = [];
+    public List<EditorQuest> Quests { get; set; } = [];
     public EditorGenerator Generator { get; set; } = new();
     public EditorOverworld? Overworld { get; set; }
     public List<EditorVisualGraph> VisualGraphs { get; set; } = [];
@@ -26,6 +31,9 @@ public sealed class EditorProject
     public string DataDirectory => Path.Combine(ProjectRoot, DataPath);
     public string ActorsDirectory => Path.Combine(DataDirectory, "actors");
     public string ItemsDirectory => Path.Combine(DataDirectory, "items");
+    public string InteractionsDirectory => Path.Combine(DataDirectory, "interactions");
+    public string ClassesDirectory => Path.Combine(DataDirectory, "classes");
+    public string QuestsDirectory => Path.Combine(DataDirectory, "quests");
     public string ScenesDirectory => Path.Combine(DataDirectory, "scenes");
     public string OverworldDirectory => Path.Combine(DataDirectory, "overworld");
     public string GeneratorFilePath => Path.Combine(DataDirectory, DefaultGeneratorPath);
@@ -44,6 +52,8 @@ public sealed class EditorProject
             DefaultGeneratorPath = loaded.Project.DefaultGenerator ?? "generators/dungeon.json",
             DefaultScenePath = loaded.Project.DefaultScene,
             DefaultOverworldPath = loaded.Project.DefaultOverworld,
+            DefaultClassId = loaded.Project.DefaultClass,
+            StartQuestsText = string.Join(", ", loaded.Project.StartQuests),
             Settings = EditorSettings.FromEngine(loaded.Settings),
             Actors = loaded.Actors.Values
                 .Select(EditorActor.FromEngine)
@@ -52,6 +62,18 @@ public sealed class EditorProject
             Items = loaded.Items.Values
                 .Select(EditorItem.FromEngine)
                 .OrderBy(item => item.Id, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            Interactions = loaded.Interactions.Values
+                .Select(EditorInteraction.FromEngine)
+                .OrderBy(interaction => interaction.Id, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            Classes = loaded.Classes.Values
+                .Select(EditorClass.FromEngine)
+                .OrderBy(classDef => classDef.Id, StringComparer.OrdinalIgnoreCase)
+                .ToList(),
+            Quests = loaded.Quests.Values
+                .Select(EditorQuest.FromEngine)
+                .OrderBy(quest => quest.Id, StringComparer.OrdinalIgnoreCase)
                 .ToList(),
             Generator = loaded.Generator is not null
                 ? EditorGenerator.FromEngine(loaded.Generator)
@@ -106,8 +128,15 @@ public sealed class EditorProject
         DataPath = DataPath,
         DefaultGenerator = DefaultGeneratorPath,
         DefaultScene = DefaultScenePath,
-        DefaultOverworld = DefaultOverworldPath
+        DefaultOverworld = DefaultOverworldPath,
+        DefaultClass = string.IsNullOrWhiteSpace(DefaultClassId) ? null : DefaultClassId,
+        StartQuests = ParseStartQuests(StartQuestsText)
     };
+
+    private static List<string> ParseStartQuests(string text) =>
+        text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(questId => !string.IsNullOrWhiteSpace(questId))
+            .ToList();
 
     public GameSettings ToGameSettings() => Settings.ToEngine();
 

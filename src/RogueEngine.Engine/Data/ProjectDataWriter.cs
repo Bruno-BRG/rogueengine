@@ -17,6 +17,15 @@ public static class ProjectDataWriter
     public static void WriteItem(string path, ItemDefinition item) =>
         ProjectJson.SerializeFile(path, item);
 
+    public static void WriteInteraction(string path, InteractionDefinition interaction) =>
+        ProjectJson.SerializeFile(path, interaction);
+
+    public static void WriteClass(string path, ClassDefinition classDef) =>
+        ProjectJson.SerializeFile(path, classDef);
+
+    public static void WriteQuest(string path, QuestDefinition quest) =>
+        ProjectJson.SerializeFile(path, quest);
+
     public static void WriteOverworld(string path, OverworldDefinition overworld) =>
         ProjectJson.SerializeFile(path, overworld);
 }

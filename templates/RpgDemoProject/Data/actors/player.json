@@ -1,0 +1,9 @@
+{
+  "id": "player",
+  "glyph": "@",
+  "color": { "r": 255, "g": 255, "b": 0 },
+  "maxHp": 20,
+  "isPlayer": true,
+  "blocksMovement": false,
+  "hasChaseAI": false
+}

@@ -1,6 +1,7 @@
 using RogueEngine.Engine.Components;
 using RogueEngine.Engine.Core;
 using RogueEngine.Engine.Data;
+using RogueEngine.Engine.Rules;
 
 namespace RogueEngine.Engine.Commands;
 
@@ -13,6 +14,18 @@ public sealed class UseItemCommand : ICommand
     {
         Entity = entity ?? throw new ArgumentNullException(nameof(entity));
         InventorySlot = inventorySlot;
+    }
+
+    public bool Execute(World world)
+    {
+        ArgumentNullException.ThrowIfNull(world);
+
+        if (world.Rules is null)
+        {
+            return false;
+        }
+
+        return Execute(world, world.Rules.Project.Items);
     }
 
     public bool Execute(World world, IReadOnlyDictionary<string, ItemDefinition> items)
@@ -44,14 +57,14 @@ public sealed class UseItemCommand : ICommand
             return false;
         }
 
-        if (definition.OnUse.Heal > 0 &&
-            Entity.TryGetComponent<HealthComponent>(out var health) &&
-            health is not null)
+        var rules = world.Rules;
+        if (rules is null)
         {
-            health.Heal(definition.OnUse.Heal);
-            world.Log.Add($"You drink {definition.Name} and recover {definition.OnUse.Heal} HP.");
+            world.Log.Add("Cannot use items right now.");
+            return false;
         }
-        else
+
+        if (!rules.ItemEffects.Apply(world, Entity, definition, items))
         {
             world.Log.Add($"You use {definition.Name}.");
         }
@@ -62,8 +75,7 @@ public sealed class UseItemCommand : ICommand
             inventory.Stacks.RemoveAt(InventorySlot - 1);
         }
 
+        world.Raise(new ItemUsedEvent(Entity, definition.Id));
         return true;
     }
-
-    public bool Execute(World world) => Execute(world, new Dictionary<string, ItemDefinition>());
 }

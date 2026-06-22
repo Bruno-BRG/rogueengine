@@ -1,0 +1,6 @@
+{
+  "id": "stairs_down",
+  "kind": "stairs",
+  "targetScene": "scenes/deeper.scene.json",
+  "message": "Stairs descend into darkness."
+}

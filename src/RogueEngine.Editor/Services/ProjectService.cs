@@ -112,6 +112,69 @@ public sealed class ProjectService
             File.Delete(staleFile);
         }
 
+        Directory.CreateDirectory(project.InteractionsDirectory);
+        var interactionFiles = Directory.Exists(project.InteractionsDirectory)
+            ? Directory.GetFiles(project.InteractionsDirectory, "*.json").ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : [];
+
+        foreach (var interaction in project.Interactions)
+        {
+            var fileName = string.IsNullOrWhiteSpace(interaction.SourceFileName)
+                ? $"{interaction.Id}.json"
+                : interaction.SourceFileName;
+            var interactionPath = Path.Combine(project.InteractionsDirectory, fileName);
+            ProjectDataWriter.WriteInteraction(interactionPath, interaction.ToEngine());
+            interaction.SourceFileName = fileName;
+            interactionFiles.Remove(interactionPath);
+        }
+
+        foreach (var staleFile in interactionFiles)
+        {
+            File.Delete(staleFile);
+        }
+
+        Directory.CreateDirectory(project.ClassesDirectory);
+        var classFiles = Directory.Exists(project.ClassesDirectory)
+            ? Directory.GetFiles(project.ClassesDirectory, "*.json").ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : [];
+
+        foreach (var classDef in project.Classes)
+        {
+            var fileName = string.IsNullOrWhiteSpace(classDef.SourceFileName)
+                ? $"{classDef.Id}.json"
+                : classDef.SourceFileName;
+            var classPath = Path.Combine(project.ClassesDirectory, fileName);
+            ProjectDataWriter.WriteClass(classPath, classDef.ToEngine());
+            classDef.SourceFileName = fileName;
+            classFiles.Remove(classPath);
+        }
+
+        foreach (var staleFile in classFiles)
+        {
+            File.Delete(staleFile);
+        }
+
+        Directory.CreateDirectory(project.QuestsDirectory);
+        var questFiles = Directory.Exists(project.QuestsDirectory)
+            ? Directory.GetFiles(project.QuestsDirectory, "*.json").ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : [];
+
+        foreach (var quest in project.Quests)
+        {
+            var fileName = string.IsNullOrWhiteSpace(quest.SourceFileName)
+                ? $"{quest.Id}.json"
+                : quest.SourceFileName;
+            var questPath = Path.Combine(project.QuestsDirectory, fileName);
+            ProjectDataWriter.WriteQuest(questPath, quest.ToEngine());
+            quest.SourceFileName = fileName;
+            questFiles.Remove(questPath);
+        }
+
+        foreach (var staleFile in questFiles)
+        {
+            File.Delete(staleFile);
+        }
+
         if (project.Overworld is not null)
         {
             Directory.CreateDirectory(project.OverworldDirectory);

@@ -6,7 +6,7 @@ Instructions for AI coding agents working in this repository.
 
 **RogueEngine** (`rogueengine`) is a specialized C# engine for 2D tile-based roguelikes. It is **not** a general-purpose game engine. Scope is intentionally narrow: grid maps, entities, turn-based rules, procgen, FOV, pathfinding, scripting, and game export.
 
-**Status:** v0.9 — items/inventory (v0.8.1) and World Toolkit (v0.9) delivered. Phases 1–9 core done; installer → v0.10.
+**Status:** v1.0 — extensible game rules (items v2, interactions, classes, quests, script hooks). Phases 1–9 + v1.0 rules done; installer → v0.10.
 
 ## Canonical naming
 
@@ -104,6 +104,18 @@ Never: `Engine → SadConsole` or `Engine → Avalonia`.
 4. **Update docs** — check off items in `docs/ROADMAP.md` when a phase deliverable is done
 5. **Commits** — only when the user asks; never force-push `main`
 6. **graphify** — if `graphify-out/graph.json` exists, use `graphify query` for codebase questions; run `graphify update .` after C# changes
+
+## Extending with scripts (v1.0)
+
+JSON first; C# when built-in registries are not enough. Public interfaces in `RogueEngine.Engine.Scripting/`:
+
+| JSON hook | Interface |
+|-----------|-----------|
+| Item `onUse.script` | `IItemEffect` |
+| Interaction `script` | `IInteractionHandler` |
+| Quest objective `type: script` | `IQuestObjectiveChecker` |
+
+See [`docs/EXTENDING.md`](docs/EXTENDING.md). Rules layer: `GameRulesContext`, `GameEvents`, registries under `RogueEngine.Engine.Rules/`.
 
 ## Game project format (reference)
 

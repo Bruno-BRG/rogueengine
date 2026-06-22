@@ -20,6 +20,9 @@ public partial class SceneMapViewport : UserControl
     public static readonly StyledProperty<IReadOnlyList<EditorItem>?> ItemsProperty =
         AvaloniaProperty.Register<SceneMapViewport, IReadOnlyList<EditorItem>?>(nameof(Items));
 
+    public static readonly StyledProperty<IReadOnlyList<EditorInteraction>?> InteractionsProperty =
+        AvaloniaProperty.Register<SceneMapViewport, IReadOnlyList<EditorInteraction>?>(nameof(Interactions));
+
     public static readonly StyledProperty<TileMap?> MapProperty =
         AvaloniaProperty.Register<SceneMapViewport, TileMap?>(nameof(Map));
 
@@ -32,6 +35,8 @@ public partial class SceneMapViewport : UserControl
 
     public event EventHandler<EditorSceneItem>? ItemPlaced;
     public event EventHandler<EditorSceneItem>? ItemRemoved;
+    public event EventHandler<EditorSceneInteraction>? InteractionPlaced;
+    public event EventHandler<EditorSceneInteraction>? InteractionRemoved;
 
     public SceneMapViewport()
     {
@@ -59,6 +64,12 @@ public partial class SceneMapViewport : UserControl
         set => SetValue(ItemsProperty, value);
     }
 
+    public IReadOnlyList<EditorInteraction>? Interactions
+    {
+        get => GetValue(InteractionsProperty);
+        set => SetValue(InteractionsProperty, value);
+    }
+
     public TileMap? Map
     {
         get => GetValue(MapProperty);
@@ -70,7 +81,8 @@ public partial class SceneMapViewport : UserControl
         base.OnPropertyChanged(change);
 
         if (change.Property == SceneProperty || change.Property == ActorsProperty ||
-            change.Property == ItemsProperty || change.Property == MapProperty)
+            change.Property == ItemsProperty || change.Property == InteractionsProperty ||
+            change.Property == MapProperty)
         {
             SyncToCanvas();
         }
@@ -81,6 +93,7 @@ public partial class SceneMapViewport : UserControl
         base.OnLoaded(e);
         RefreshPlaceActorCombo();
         RefreshPlaceItemCombo();
+        RefreshPlaceInteractionCombo();
         SyncToCanvas();
         if (Scene?.Seed is int seed)
         {
@@ -129,11 +142,32 @@ public partial class SceneMapViewport : UserControl
         }
     }
 
+    public void RefreshPlaceInteractionCombo()
+    {
+        var previous = PlaceInteractionCombo.SelectedItem as string;
+        var interactionIds = (Interactions ?? [])
+            .Select(interaction => interaction.Id)
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        PlaceInteractionCombo.ItemsSource = new ObservableCollection<string>(interactionIds);
+
+        if (!string.IsNullOrWhiteSpace(previous) && interactionIds.Contains(previous))
+        {
+            PlaceInteractionCombo.SelectedItem = previous;
+        }
+        else if (interactionIds.Count > 0)
+        {
+            PlaceInteractionCombo.SelectedIndex = 0;
+        }
+    }
+
     private void SyncToCanvas()
     {
         MapCanvasView.Scene = Scene;
         MapCanvasView.Actors = Actors;
         MapCanvasView.Items = Items;
+        MapCanvasView.Interactions = Interactions;
         MapCanvasView.Map = Map;
         MapCanvasView.InvalidateVisual();
 
@@ -172,12 +206,53 @@ public partial class SceneMapViewport : UserControl
     private void OnPlaceItemChanged(object? sender, SelectionChangedEventArgs e)
     {
         MapCanvasView.PlaceItemId = PlaceItemCombo.SelectedItem as string;
+        if (!string.IsNullOrWhiteSpace(MapCanvasView.PlaceItemId))
+        {
+            MapCanvasView.PlaceInteractionId = null;
+            PlaceInteractionCombo.SelectedItem = null;
+        }
+    }
+
+    private void OnPlaceInteractionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        MapCanvasView.PlaceInteractionId = PlaceInteractionCombo.SelectedItem as string;
+        if (!string.IsNullOrWhiteSpace(MapCanvasView.PlaceInteractionId))
+        {
+            MapCanvasView.PlaceItemId = null;
+            PlaceItemCombo.SelectedItem = null;
+            MapCanvasView.PlaceActorId = null;
+            PlaceActorCombo.SelectedItem = null;
+        }
     }
 
     private void OnCellClicked(object? sender, MapCellEventArgs e)
     {
         if (Scene is null)
         {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(MapCanvasView.PlaceInteractionId))
+        {
+            var existingInteraction = Scene.InteractionPlacements.FirstOrDefault(
+                interaction => interaction.X == e.X && interaction.Y == e.Y);
+            if (existingInteraction is not null)
+            {
+                Scene.InteractionPlacements.Remove(existingInteraction);
+                InteractionRemoved?.Invoke(this, existingInteraction);
+                MapCanvasView.InvalidateVisual();
+                return;
+            }
+
+            var interactionPlacement = new EditorSceneInteraction
+            {
+                InteractionId = MapCanvasView.PlaceInteractionId,
+                X = e.X,
+                Y = e.Y
+            };
+            Scene.InteractionPlacements.Add(interactionPlacement);
+            InteractionPlaced?.Invoke(this, interactionPlacement);
+            MapCanvasView.InvalidateVisual();
             return;
         }
 
@@ -268,9 +343,11 @@ public sealed class MapCanvasControl : Control
     public EditorScene? Scene { get; set; }
     public IReadOnlyList<EditorActor>? Actors { get; set; }
     public IReadOnlyList<EditorItem>? Items { get; set; }
+    public IReadOnlyList<EditorInteraction>? Interactions { get; set; }
     public TileMap? Map { get; set; }
     public string? PlaceActorId { get; set; }
     public string? PlaceItemId { get; set; }
+    public string? PlaceInteractionId { get; set; }
 
     public event EventHandler<MapCellEventArgs>? CellClicked;
     public event EventHandler<MapCellEventArgs>? PlayerSpawnClicked;
@@ -310,6 +387,13 @@ public sealed class MapCanvasControl : Control
         if (entity is not null && string.IsNullOrWhiteSpace(PlaceActorId))
         {
             EntityClicked?.Invoke(this, entity);
+            e.Handled = true;
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(PlaceInteractionId) && Map.IsWalkable(x, y))
+        {
+            CellClicked?.Invoke(this, new MapCellEventArgs { X = x, Y = y });
             e.Handled = true;
             return;
         }
@@ -448,6 +532,19 @@ public sealed class MapCanvasControl : Control
                     new Typeface(FontFamily.Default),
                     CellSize * 0.75,
                     new SolidColorBrush(Color.FromRgb(item.ColorR, item.ColorG, item.ColorB)));
+
+                context.DrawText(glyph, new Point(placement.X * CellSize + 2, placement.Y * CellSize + 1));
+            }
+
+            foreach (var placement in Scene.InteractionPlacements)
+            {
+                var glyph = new FormattedText(
+                    "+",
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    new Typeface(FontFamily.Default),
+                    CellSize * 0.75,
+                    new SolidColorBrush(Color.Parse("#c8b478")));
 
                 context.DrawText(glyph, new Point(placement.X * CellSize + 2, placement.Y * CellSize + 1));
             }

@@ -1,0 +1,9 @@
+{
+  "id": "leather_armor",
+  "name": "Leather Armor",
+  "glyph": "[",
+  "color": { "r": 139, "g": 90, "b": 43 },
+  "kind": "equipment",
+  "equipSlot": "armor",
+  "stats": { "defense": 1 }
+}

@@ -14,9 +14,18 @@ public sealed class LoadedProject
     public OverworldDefinition? DefaultOverworld { get; init; }
     public IReadOnlyDictionary<string, ItemDefinition> Items { get; init; } =
         new Dictionary<string, ItemDefinition>(StringComparer.OrdinalIgnoreCase);
+    public IReadOnlyDictionary<string, InteractionDefinition> Interactions { get; init; } =
+        new Dictionary<string, InteractionDefinition>(StringComparer.OrdinalIgnoreCase);
+    public IReadOnlyDictionary<string, ClassDefinition> Classes { get; init; } =
+        new Dictionary<string, ClassDefinition>(StringComparer.OrdinalIgnoreCase);
+    public IReadOnlyDictionary<string, QuestDefinition> Quests { get; init; } =
+        new Dictionary<string, QuestDefinition>(StringComparer.OrdinalIgnoreCase);
     public IReadOnlyList<VisualGraph> VisualScripts { get; init; } = [];
 
     public string ItemsDirectory => Path.Combine(DataDirectory, "items");
+    public string InteractionsDirectory => Path.Combine(DataDirectory, "interactions");
+    public string ClassesDirectory => Path.Combine(DataDirectory, "classes");
+    public string QuestsDirectory => Path.Combine(DataDirectory, "quests");
 
     public string DataDirectory => Path.Combine(ProjectRoot, Project.DataPath);
     public string ScenesDirectory => Path.Combine(DataDirectory, "scenes");

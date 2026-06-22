@@ -17,6 +17,32 @@ public static class GameSaveLoad
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(savePath);
 
+        string? playerClassId = null;
+        QuestLogSnapshot? questLogSnapshot = null;
+        var player = world.GetPlayer();
+        if (player is not null)
+        {
+            if (player.TryGetComponent<ClassComponent>(out var classComponent) && classComponent is not null)
+            {
+                playerClassId = classComponent.ClassId;
+            }
+
+            if (player.TryGetComponent<QuestLogComponent>(out var questLog) && questLog is not null)
+            {
+                questLogSnapshot = new QuestLogSnapshot
+                {
+                    CompletedQuestIds = questLog.CompletedQuestIds.ToArray(),
+                    ActiveQuests = questLog.ActiveQuests
+                        .Select(entry => new QuestProgressSnapshot
+                        {
+                            QuestId = entry.QuestId,
+                            ObjectiveProgress = entry.ObjectiveProgress.ToArray()
+                        })
+                        .ToArray()
+                };
+            }
+        }
+
         var snapshots = new List<EntitySnapshot>();
         foreach (var entity in world.Entities)
         {
@@ -31,6 +57,18 @@ public static class GameSaveLoad
                 {
                     PickupItemId = pickup.ItemId,
                     PickupCount = pickup.Count,
+                    X = position.Position.X,
+                    Y = position.Position.Y
+                });
+                continue;
+            }
+
+            if (entity.TryGetComponent<InteractionComponent>(out var interaction) && interaction is not null)
+            {
+                snapshots.Add(new EntitySnapshot
+                {
+                    InteractionId = interaction.InteractionId,
+                    InteractionConsumed = interaction.IsConsumed,
                     X = position.Position.X,
                     Y = position.Position.Y
                 });
@@ -77,6 +115,8 @@ public static class GameSaveLoad
         var saveData = new SaveData
         {
             Seed = seed,
+            PlayerClassId = playerClassId,
+            QuestLog = questLogSnapshot,
             Entities = snapshots.ToArray()
         };
 

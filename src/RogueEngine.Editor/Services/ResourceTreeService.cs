@@ -92,6 +92,72 @@ public sealed class ResourceTreeService
         });
         root.Children.Add(itemsFolder);
 
+        var interactionsFolder = CreateFolder("interactions", "Interactions");
+        foreach (var interaction in project.Interactions.OrderBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase))
+        {
+            interactionsFolder.Children.Add(new EditorResourceNode
+            {
+                Id = $"interaction:{interaction.Id}",
+                Title = interaction.Id,
+                Icon = "+",
+                Kind = EditorResourceKind.Interaction,
+                Payload = interaction.Id
+            });
+        }
+
+        interactionsFolder.Children.Add(new EditorResourceNode
+        {
+            Id = "add-interaction",
+            Title = "Add interaction…",
+            Icon = "+",
+            Kind = EditorResourceKind.AddNew
+        });
+        root.Children.Add(interactionsFolder);
+
+        var classesFolder = CreateFolder("classes", "Classes");
+        foreach (var classDef in project.Classes.OrderBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase))
+        {
+            classesFolder.Children.Add(new EditorResourceNode
+            {
+                Id = $"class:{classDef.Id}",
+                Title = classDef.Name,
+                Icon = "[C]",
+                Kind = EditorResourceKind.Class,
+                Payload = classDef.Id
+            });
+        }
+
+        classesFolder.Children.Add(new EditorResourceNode
+        {
+            Id = "add-class",
+            Title = "Add class…",
+            Icon = "+",
+            Kind = EditorResourceKind.AddNew
+        });
+        root.Children.Add(classesFolder);
+
+        var questsFolder = CreateFolder("quests", "Quests");
+        foreach (var quest in project.Quests.OrderBy(entry => entry.Id, StringComparer.OrdinalIgnoreCase))
+        {
+            questsFolder.Children.Add(new EditorResourceNode
+            {
+                Id = $"quest:{quest.Id}",
+                Title = quest.Title,
+                Icon = "[Q]",
+                Kind = EditorResourceKind.Quest,
+                Payload = quest.Id
+            });
+        }
+
+        questsFolder.Children.Add(new EditorResourceNode
+        {
+            Id = "add-quest",
+            Title = "Add quest…",
+            Icon = "+",
+            Kind = EditorResourceKind.AddNew
+        });
+        root.Children.Add(questsFolder);
+
         if (project.Overworld is not null)
         {
             root.Children.Add(new EditorResourceNode

@@ -4,12 +4,13 @@
              x:Class="RogueEngine.Editor.Controls.SceneMapViewport">
   <DockPanel>
     <Border DockPanel.Dock="Top" Background="#16161a" BorderBrush="#2d2d35" BorderThickness="0,0,0,1" Padding="8,6">
-      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto,Auto">
         <TextBlock Grid.Column="0" Text="Seed" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="#9a9a9f" />
         <NumericUpDown Grid.Column="1" x:Name="SeedInput" Minimum="0" Maximum="2147483647" Width="120" ValueChanged="OnSeedChanged" />
         <Button Grid.Column="3" Content="Regenerate" Margin="8,0,0,0" Click="OnRegenerateClicked" />
         <ComboBox Grid.Column="4" x:Name="PlaceActorCombo" Width="140" Margin="8,0,0,0" SelectionChanged="OnPlaceActorChanged" />
         <ComboBox Grid.Column="5" x:Name="PlaceItemCombo" Width="140" Margin="8,0,0,0" SelectionChanged="OnPlaceItemChanged" />
+        <ComboBox Grid.Column="6" x:Name="PlaceInteractionCombo" Width="140" Margin="8,0,0,0" SelectionChanged="OnPlaceInteractionChanged" />
       </Grid>
     </Border>
     <Border Background="#0c0c0f" BorderBrush="#2d2d35" BorderThickness="1">

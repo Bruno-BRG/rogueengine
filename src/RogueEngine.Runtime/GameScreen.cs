@@ -109,6 +109,15 @@ internal sealed class GameScreen : ScreenObject
             return true;
         }
 
+        if (keyboard.IsKeyPressed(Keys.Space) && _mode == GameMode.Dungeon)
+        {
+            if (new InteractCommand(_player).Execute(_world))
+            {
+                RenderAll();
+                return true;
+            }
+        }
+
         var command = InputHandler.GetMoveCommand(keyboard, _player);
         if (command is not null)
         {
@@ -143,7 +152,7 @@ internal sealed class GameScreen : ScreenObject
 
             if (keyboard.IsKeyDown(Keys.U))
             {
-                return new UseItemCommand(_player, slot).Execute(_world, _project.Items);
+                return new UseItemCommand(_player, slot).Execute(_world);
             }
 
             if (keyboard.IsKeyDown(Keys.E))
@@ -175,7 +184,7 @@ internal sealed class GameScreen : ScreenObject
         _seed = Random.Shared.Next();
         ApplySetup(WorldBuilder.CreateDungeonFromCell(_project, cell, RuntimeBootstrap.Scripts, _seed));
         UpdateFieldOfView();
-        _world.Log.Add("Press G to pick up items, U+1-9 to use, E+1-9 to equip.");
+        _world.Log.Add("Press G to pick up items, U+1-9 to use, E+1-9 to equip, Space to interact.");
     }
 
     private void UpdateFieldOfView()
@@ -215,6 +224,7 @@ internal sealed class GameScreen : ScreenObject
     {
         _project = setup.Project;
         _world = setup.World;
+        _world.Rules ??= setup.Rules;
         _player = setup.Player;
         _turnManager = setup.TurnManager;
         _seed = setup.Seed;

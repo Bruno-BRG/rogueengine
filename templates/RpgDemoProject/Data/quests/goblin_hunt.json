@@ -1,0 +1,10 @@
+{
+  "id": "goblin_hunt",
+  "title": "Goblin Hunt",
+  "objectives": [
+    { "type": "kill", "actorId": "goblin", "count": 3 }
+  ],
+  "rewards": [
+    { "itemId": "health_potion", "count": 2 }
+  ]
+}

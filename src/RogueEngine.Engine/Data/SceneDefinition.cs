@@ -15,4 +15,5 @@ public sealed class SceneDefinition
     public int? PlayerSpawnY { get; init; }
     public IReadOnlyList<SceneEntityPlacement> Entities { get; init; } = [];
     public IReadOnlyList<SceneItemPlacement> ItemPlacements { get; init; } = [];
+    public IReadOnlyList<SceneInteractionPlacement> Interactions { get; init; } = [];
 }

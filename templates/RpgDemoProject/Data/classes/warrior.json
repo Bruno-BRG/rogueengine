@@ -1,0 +1,10 @@
+{
+  "id": "warrior",
+  "name": "Warrior",
+  "baseMaxHp": 25,
+  "statBonuses": { "attack": 1, "defense": 0, "maxHp": 0 },
+  "startItems": [
+    { "itemId": "rusty_sword", "count": 1 },
+    { "itemId": "health_potion", "count": 1 }
+  ]
+}

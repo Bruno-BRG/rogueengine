@@ -8,4 +8,6 @@ public sealed class GameProject
     public string? DefaultGenerator { get; init; }
     public string? DefaultScene { get; init; }
     public string? DefaultOverworld { get; init; }
+    public string? DefaultClass { get; init; }
+    public IReadOnlyList<string> StartQuests { get; init; } = [];
 }

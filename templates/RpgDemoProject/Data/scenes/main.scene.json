@@ -1,0 +1,23 @@
+{
+  "id": "main",
+  "name": "RPG Demo Dungeon",
+  "generator": "generators/dungeon.json",
+  "width": 80,
+  "height": 22,
+  "seed": 4242,
+  "playerSpawnX": 10,
+  "playerSpawnY": 5,
+  "entities": [
+    { "actorId": "goblin", "x": 18, "y": 8 },
+    { "actorId": "goblin", "x": 22, "y": 10 },
+    { "actorId": "goblin", "x": 25, "y": 7 }
+  ],
+  "itemPlacements": [
+    { "itemId": "health_potion", "x": 12, "y": 6, "count": 1 },
+    { "itemId": "iron_key", "x": 14, "y": 8, "count": 1 }
+  ],
+  "interactions": [
+    { "interactionId": "iron_door", "x": 16, "y": 5 },
+    { "interactionId": "stairs_down", "x": 30, "y": 10 }
+  ]
+}

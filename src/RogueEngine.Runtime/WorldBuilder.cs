@@ -1,8 +1,10 @@
+using RogueEngine.Engine.Commands;
 using RogueEngine.Engine.AI;
 using RogueEngine.Engine.Components;
 using RogueEngine.Engine.Core;
 using RogueEngine.Engine.Data;
 using RogueEngine.Engine.ProcGen;
+using RogueEngine.Engine.Rules;
 using RogueEngine.Engine.Scripting;
 using RogueEngine.Engine.TurnBased;
 using RogueEngine.Toolkit.Pathfinding;
@@ -22,23 +24,27 @@ internal static class WorldBuilder
     {
         ArgumentNullException.ThrowIfNull(project);
 
+        var rules = CreateRules(project, scripts);
         var scene = project.DefaultScene;
         var mapSize = ResolveMapSize(project, scene);
         var gameSeed = seed ?? scene?.Seed ?? project.Generator?.Seed ?? Random.Shared.Next();
         var random = new Random(gameSeed);
         var generation = GenerateMap(project, mapSize.Width, mapSize.Height, random);
-        var world = new World(generation.Map);
+        var world = new World(generation.Map) { Rules = rules };
         var turnManager = new TurnManager();
 
-        var playerDefinition = project.Actors.Values.First(actor => actor.IsPlayer);
+        var playerDefinition = ResolvePlayerDefinition(project);
         var playerPosition = ResolvePlayerSpawn(scene, generation);
         var player = SpawnActor(world, turnManager, scripts, playerDefinition, playerPosition, isPlayer: true);
+        ApplyPlayerClass(project, rules, player, playerDefinition);
+        StartInitialQuests(world, rules, player);
         world.Log.Add("You enter the dungeon.");
 
         SpawnSceneEntities(world, turnManager, scripts, project, scene, random);
         SpawnSceneItems(world, project, scene);
+        SpawnSceneInteractions(world, project, scene);
 
-        return new GameSetup(world, player, turnManager, gameSeed, project);
+        return new GameSetup(world, player, turnManager, gameSeed, project, rules);
     }
 
     public static GameSetup CreateOverworldGame(LoadedProject project, ScriptAssembly? scripts = null)
@@ -51,9 +57,10 @@ internal static class WorldBuilder
 
         var service = new Toolkit.Overworld.OverworldService(project.DefaultOverworld);
         var map = service.BuildOverworldMap();
-        var world = new World(map);
+        var rules = CreateRules(project, scripts);
+        var world = new World(map) { Rules = rules };
         var turnManager = new TurnManager();
-        var playerDefinition = project.Actors.Values.First(actor => actor.IsPlayer);
+        var playerDefinition = ResolvePlayerDefinition(project);
         var player = SpawnActor(
             world,
             turnManager,
@@ -61,8 +68,10 @@ internal static class WorldBuilder
             playerDefinition,
             new Position(2, 2),
             isPlayer: true);
+        ApplyPlayerClass(project, rules, player, playerDefinition);
+        StartInitialQuests(world, rules, player);
         world.Log.Add("You stand on the overworld. Move to a region and press Enter.");
-        return new GameSetup(world, player, turnManager, Random.Shared.Next(), project);
+        return new GameSetup(world, player, turnManager, Random.Shared.Next(), project, rules);
     }
 
     public static GameSetup CreateDungeonFromCell(
@@ -75,9 +84,10 @@ internal static class WorldBuilder
         var random = new Random(seed);
         var generation = service.EnterCell(cell, project, random);
         ApplyTileset(project, generation.Map, project.Generator);
-        var world = new World(generation.Map);
+        var rules = CreateRules(project, scripts);
+        var world = new World(generation.Map) { Rules = rules };
         var turnManager = new TurnManager();
-        var playerDefinition = project.Actors.Values.First(actor => actor.IsPlayer);
+        var playerDefinition = ResolvePlayerDefinition(project);
         var player = SpawnActor(
             world,
             turnManager,
@@ -85,8 +95,10 @@ internal static class WorldBuilder
             playerDefinition,
             generation.Rooms.Count > 0 ? generation.Rooms[0].Center : new Position(2, 2),
             isPlayer: true);
+        ApplyPlayerClass(project, rules, player, playerDefinition);
+        StartInitialQuests(world, rules, player);
         world.Log.Add($"You enter {cell.Id}.");
-        return new GameSetup(world, player, turnManager, seed, project);
+        return new GameSetup(world, player, turnManager, seed, project, rules);
     }
 
     public static GameSetup CreateFromSave(LoadedProject project, SaveData saveData, ScriptAssembly? scripts = null)
@@ -97,7 +109,8 @@ internal static class WorldBuilder
         var mapSize = ResolveMapSize(project);
         var random = new Random(saveData.Seed);
         var generation = GenerateMap(project, mapSize.Width, mapSize.Height, random);
-        var world = new World(generation.Map);
+        var rules = CreateRules(project, scripts);
+        var world = new World(generation.Map) { Rules = rules };
         var turnManager = new TurnManager();
         Entity? player = null;
 
@@ -111,6 +124,16 @@ internal static class WorldBuilder
                     snapshot.PickupItemId,
                     snapshot.PickupCount > 0 ? snapshot.PickupCount : 1,
                     new Position(snapshot.X, snapshot.Y));
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(snapshot.InteractionId))
+            {
+                if (!snapshot.InteractionConsumed)
+                {
+                    SpawnInteraction(world, project, snapshot.InteractionId, new Position(snapshot.X, snapshot.Y));
+                }
+
                 continue;
             }
 
@@ -141,6 +164,7 @@ internal static class WorldBuilder
             if (definition.IsPlayer)
             {
                 player = entity;
+                RestorePlayerMeta(player, saveData);
             }
         }
 
@@ -150,7 +174,7 @@ internal static class WorldBuilder
         }
 
         world.Log.Add("Game loaded.");
-        return new GameSetup(world, player, turnManager, saveData.Seed, project);
+        return new GameSetup(world, player, turnManager, saveData.Seed, project, rules);
     }
 
     private static void SpawnSceneEntities(
@@ -226,6 +250,47 @@ internal static class WorldBuilder
         }
     }
 
+    private static void SpawnSceneInteractions(World world, LoadedProject project, SceneDefinition? scene)
+    {
+        if (scene is null)
+        {
+            return;
+        }
+
+        foreach (var placement in scene.Interactions)
+        {
+            SpawnInteraction(world, project, placement.InteractionId, new Position(placement.X, placement.Y));
+        }
+    }
+
+    private static void SpawnInteraction(
+        World world,
+        LoadedProject project,
+        string interactionId,
+        Position position)
+    {
+        if (!project.Interactions.TryGetValue(interactionId, out var definition) ||
+            !world.Map.IsWalkable(position) ||
+            world.GetEntityAt(position) is not null)
+        {
+            return;
+        }
+
+        var entity = new Entity();
+        entity.AddComponent(new PositionComponent(position));
+        entity.AddComponent(new InteractionComponent { InteractionId = interactionId });
+        entity.AddComponent(new RenderableComponent(ResolveInteractionGlyph(definition), new RgbColor(200, 180, 120)));
+        world.AddEntity(entity);
+    }
+
+    private static char ResolveInteractionGlyph(InteractionDefinition definition) =>
+        definition.Kind.ToLowerInvariant() switch
+        {
+            "door" => '+',
+            "stairs" => '>',
+            _ => '?'
+        };
+
     private static void SpawnItemPickup(
         World world,
         LoadedProject project,
@@ -264,6 +329,7 @@ internal static class WorldBuilder
         {
             entity.AddComponent(new IsPlayerComponent());
             entity.AddComponent(new InventoryComponent());
+            entity.AddComponent(new QuestLogComponent());
         }
 
         if (definition.BlocksMovement)
@@ -390,6 +456,97 @@ internal static class WorldBuilder
         var tileSet = TileSetLoader.Load(fullPath);
         AutotileApplicator.Apply(map, tileSet);
     }
+
+    private static GameRulesContext CreateRules(LoadedProject project, ScriptAssembly? scripts) =>
+        new(project, scripts);
+
+    private static ActorDefinition ResolvePlayerDefinition(LoadedProject project)
+    {
+        if (!string.IsNullOrWhiteSpace(project.Project.DefaultClass) &&
+            project.Classes.TryGetValue(project.Project.DefaultClass, out var classDef) &&
+            !string.IsNullOrWhiteSpace(classDef.PlayerActorId) &&
+            project.Actors.TryGetValue(classDef.PlayerActorId, out var classActor))
+        {
+            return classActor;
+        }
+
+        return project.Actors.Values.First(actor => actor.IsPlayer);
+    }
+
+    private static void ApplyPlayerClass(
+        LoadedProject project,
+        GameRulesContext rules,
+        Entity player,
+        ActorDefinition actor,
+        string? classIdOverride = null)
+    {
+        var classId = classIdOverride ?? project.Project.DefaultClass;
+        if (string.IsNullOrWhiteSpace(classId) ||
+            !project.Classes.TryGetValue(classId, out var classDef))
+        {
+            return;
+        }
+
+        player.AddComponent(new ClassComponent { ClassId = classId });
+
+        if (player.TryGetComponent<HealthComponent>(out var health) && health is not null)
+        {
+            health.SetMaxHp(StatResolver.GetMaxHp(player, actor, rules));
+        }
+
+        if (!player.TryGetComponent<InventoryComponent>(out var inventory) || inventory is null)
+        {
+            return;
+        }
+
+        foreach (var startItem in classDef.StartItems)
+        {
+            PickupCommand.AddToInventory(inventory, startItem.ItemId, startItem.Count);
+        }
+    }
+
+    private static void StartInitialQuests(World world, GameRulesContext rules, Entity player)
+    {
+        foreach (var questId in rules.Project.Project.StartQuests)
+        {
+            if (!string.IsNullOrWhiteSpace(questId))
+            {
+                rules.Quests.StartQuest(player, questId);
+            }
+        }
+    }
+
+    private static void RestorePlayerMeta(Entity player, SaveData saveData)
+    {
+        if (!string.IsNullOrWhiteSpace(saveData.PlayerClassId))
+        {
+            player.AddComponent(new ClassComponent { ClassId = saveData.PlayerClassId });
+        }
+
+        if (saveData.QuestLog is null ||
+            !player.TryGetComponent<QuestLogComponent>(out var questLog) ||
+            questLog is null)
+        {
+            return;
+        }
+
+        questLog.ActiveQuests.Clear();
+        questLog.CompletedQuestIds.Clear();
+
+        foreach (var questId in saveData.QuestLog.CompletedQuestIds)
+        {
+            questLog.CompletedQuestIds.Add(questId);
+        }
+
+        foreach (var entry in saveData.QuestLog.ActiveQuests)
+        {
+            questLog.ActiveQuests.Add(new QuestProgressEntry
+            {
+                QuestId = entry.QuestId,
+                ObjectiveProgress = entry.ObjectiveProgress.ToList()
+            });
+        }
+    }
 }
 
 internal sealed record GameSetup(
@@ -397,4 +554,5 @@ internal sealed record GameSetup(
     Entity Player,
     TurnManager TurnManager,
     int Seed,
-    LoadedProject Project);
+    LoadedProject Project,
+    GameRulesContext Rules);

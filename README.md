@@ -2,7 +2,7 @@
 
 A specialized 2D tile-based roguelike engine in C#. RogueEngine is not a general-purpose game engine like Unity or Godot — it focuses on a narrower domain: grid maps, entities, turn-based gameplay, procedural generation, field of view, pathfinding, gameplay scripts, and exporting finished games as executables or installers.
 
-**Status:** v0.9 — items/inventory, World Toolkit (pluggable generators, bitmask autotile, overworld MVP), editor item & generator UI.
+**Status:** v1.0 — extensible game rules (items v2, interactions, classes, quests, script hooks). See [`docs/EXTENDING.md`](docs/EXTENDING.md).
 
 ## What is this?
 
@@ -74,11 +74,24 @@ MyGame/
   Build/
 ```
 
-The starter template lives in `templates/BasicRoguelikeProject/`.
+The starter templates live in `templates/BasicRoguelikeProject/` and `templates/RpgDemoProject/` (v1.0 RPG demo with classes, quests, interactions).
+
+## Extending with scripts
+
+JSON covers common item effects, doors, and quest objectives. For custom mechanics, add a C# class in `Scripts/` and reference it from JSON:
+
+| Hook | Interface |
+|------|-----------|
+| Item `onUse.script` | `IItemEffect` |
+| Interaction `script` | `IInteractionHandler` |
+| Quest objective `script` | `IQuestObjectiveChecker` |
+| Actor `behavior` | `IBehavior` |
+
+Full guide: **[`docs/EXTENDING.md`](docs/EXTENDING.md)**
 
 ## Roadmap
 
-**Current version:** 0.7 (visual scripting MVP)
+**Current version:** 1.0 (extensible game rules)
 
 Full version milestones, implementation phases, MVP criteria, and technical backlog: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**
 
@@ -91,13 +104,14 @@ Full version milestones, implementation phases, MVP criteria, and technical back
 | 0.6 | Basic editor |
 | 0.7 | Visual scripting MVP |
 | 0.8–0.10 | FOV, World Toolkit, installer |
-| 1.0 | Initial release |
+| **1.0** | Extensible game rules (items v2, interactions, classes, quests) |
 
 ## Documentation
 
 | Resource | Location |
 |----------|----------|
 | Roadmap (living) | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
+| Extending (JSON + scripts) | [`docs/EXTENDING.md`](docs/EXTENDING.md) |
 | AI agent guide | [`AGENTS.md`](AGENTS.md) |
 | Doc index | [`docs/README.md`](docs/README.md) |
 | Architecture PDF | [`docs/planning/`](docs/planning/) |

@@ -164,6 +164,9 @@ public partial class EditorShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsVisualScriptDocument));
         OnPropertyChanged(nameof(IsCodeScriptDocument));
         OnPropertyChanged(nameof(IsWelcomeDocument));
+        OnPropertyChanged(nameof(IsInteractionDocument));
+        OnPropertyChanged(nameof(IsClassDocument));
+        OnPropertyChanged(nameof(IsQuestDocument));
         OnPropertyChanged(nameof(InspectorTitle));
         SyncSelectionFromDocument(value);
     }
@@ -305,6 +308,11 @@ public partial class EditorShellViewModel : ViewModelBase
                 CodeScriptContent = _selectedScript?.Content ?? string.Empty;
                 OpenDocument(EditorDocumentKind.CodeScript, node.Payload, CodeScriptFileName, "C#");
                 break;
+            case EditorResourceKind.Interaction:
+            case EditorResourceKind.Class:
+            case EditorResourceKind.Quest:
+                OpenGameRulesResource(node);
+                break;
             case EditorResourceKind.AddNew:
                 HandleAddNew(node.Id);
                 break;
@@ -433,6 +441,7 @@ public partial class EditorShellViewModel : ViewModelBase
         MarkDirty();
         OnPropertyChanged(nameof(SceneEntityCount));
         OnPropertyChanged(nameof(SceneItemCount));
+        OnPropertyChanged(nameof(SceneInteractionCount));
     }
 
     public void RefreshSceneMapPreview() => RefreshScenePreview();
@@ -778,6 +787,11 @@ public partial class EditorShellViewModel : ViewModelBase
             case "add-scene": AddScene(); break;
             case "add-item": AddItem(); break;
             case "add-visual": AddVisualGraph(); break;
+            case "add-interaction":
+            case "add-class":
+            case "add-quest":
+                HandleAddNewGameRules(nodeId);
+                break;
         }
     }
 
@@ -842,6 +856,9 @@ public partial class EditorShellViewModel : ViewModelBase
                 CodeScriptFileName = _selectedScript?.FileName ?? string.Empty;
                 CodeScriptContent = _selectedScript?.Content ?? string.Empty;
                 break;
+            default:
+                SyncGameRulesSelectionFromDocument(tab);
+                break;
         }
     }
 
@@ -886,6 +903,8 @@ public partial class EditorShellViewModel : ViewModelBase
         foreach (var item in project.Items) Items.Add(item);
         SelectedItem = Items.FirstOrDefault();
 
+        LoadGameRulesCollections(project);
+
         Scenes.Clear();
         foreach (var scene in project.Scenes) Scenes.Add(scene);
         SelectedScene = Scenes.FirstOrDefault();
@@ -912,6 +931,7 @@ public partial class EditorShellViewModel : ViewModelBase
         ApplyVisualNodeFormToSelection();
         ApplyOverworldFormToProject();
         ApplyGeneratorParametersToProject();
+        ApplyGameRulesFormsToProject();
 
         _project.Name = ProjectName;
         _project.Settings.MapWidth = MapWidth;
@@ -944,6 +964,7 @@ public partial class EditorShellViewModel : ViewModelBase
             ScenePreviewMap = null;
             OnPropertyChanged(nameof(SceneEntityCount));
             OnPropertyChanged(nameof(SceneItemCount));
+            OnPropertyChanged(nameof(SceneInteractionCount));
             return;
         }
 
@@ -956,6 +977,7 @@ public partial class EditorShellViewModel : ViewModelBase
         RefreshScenePreview();
         OnPropertyChanged(nameof(SceneEntityCount));
         OnPropertyChanged(nameof(SceneItemCount));
+        OnPropertyChanged(nameof(SceneInteractionCount));
     }
 
     private void RefreshScenePreview()
@@ -1117,6 +1139,7 @@ public partial class EditorShellViewModel : ViewModelBase
         ItemMaxStack = SelectedItem.MaxStack;
         ItemEquipSlot = SelectedItem.EquipSlot ?? string.Empty;
         ItemHealOnUse = SelectedItem.HealOnUse;
+        LoadSelectedItemIntoFormGameRules();
     }
 
     private void ApplyItemFormToSelection()
@@ -1132,6 +1155,7 @@ public partial class EditorShellViewModel : ViewModelBase
         SelectedItem.MaxStack = ItemMaxStack;
         SelectedItem.EquipSlot = string.IsNullOrWhiteSpace(ItemEquipSlot) ? null : ItemEquipSlot;
         SelectedItem.HealOnUse = ItemHealOnUse;
+        ApplyItemFormToSelectionGameRules();
         MarkDirty();
     }
 

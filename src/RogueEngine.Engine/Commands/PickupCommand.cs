@@ -1,5 +1,6 @@
 using RogueEngine.Engine.Components;
 using RogueEngine.Engine.Core;
+using RogueEngine.Engine.Rules;
 using RogueEngine.Engine.Data;
 
 namespace RogueEngine.Engine.Commands;
@@ -36,6 +37,7 @@ public sealed class PickupCommand : ICommand
         AddToInventory(inventory, itemPickup.ItemId, itemPickup.Count);
         world.RemoveEntity(pickup);
         world.Log.Add($"Picked up {itemPickup.ItemId} x{itemPickup.Count}.");
+        world.Raise(new ItemPickedUpEvent(Entity, itemPickup.ItemId, itemPickup.Count));
         return true;
     }
 
@@ -67,7 +69,7 @@ public sealed class PickupCommand : ICommand
         yield return new Position(position.X, position.Y - 1);
     }
 
-    internal static void AddToInventory(InventoryComponent inventory, string itemId, int count)
+    public static void AddToInventory(InventoryComponent inventory, string itemId, int count)
     {
         foreach (var stack in inventory.Stacks)
         {

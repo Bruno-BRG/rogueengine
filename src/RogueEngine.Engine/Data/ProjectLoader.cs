@@ -54,6 +54,9 @@ public static class ProjectLoader
         }
 
         var items = ItemLoader.LoadAllFromDirectory(Path.Combine(dataDirectory, "items"));
+        var interactions = InteractionLoader.LoadAllFromDirectory(Path.Combine(dataDirectory, "interactions"));
+        var classes = ClassLoader.LoadAllFromDirectory(Path.Combine(dataDirectory, "classes"));
+        var quests = QuestLoader.LoadAllFromDirectory(Path.Combine(dataDirectory, "quests"));
 
         GeneratorDefinition? generator = null;
         if (!string.IsNullOrWhiteSpace(project.DefaultGenerator))
@@ -93,6 +96,9 @@ public static class ProjectLoader
             Settings = settings,
             Actors = actors,
             Items = items,
+            Interactions = interactions,
+            Classes = classes,
+            Quests = quests,
             Generator = generator,
             DefaultScene = defaultScene,
             DefaultOverworld = defaultOverworld,

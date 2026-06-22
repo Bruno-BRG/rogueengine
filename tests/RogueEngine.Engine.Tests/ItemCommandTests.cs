@@ -2,6 +2,7 @@ using RogueEngine.Engine.Commands;
 using RogueEngine.Engine.Components;
 using RogueEngine.Engine.Core;
 using RogueEngine.Engine.Data;
+using RogueEngine.Engine.Rules;
 
 namespace RogueEngine.Engine.Tests;
 
@@ -46,9 +47,19 @@ public class ItemCommandTests
                 OnUse = new ItemUseEffect { Heal = 5 }
             }
         };
+        var project = new LoadedProject
+        {
+            ProjectRoot = ".",
+            ReprojPath = "game.reproj",
+            Project = new GameProject(),
+            Settings = new GameSettings(),
+            Actors = new Dictionary<string, ActorDefinition>(),
+            Items = items
+        };
+        world.Rules = new Rules.GameRulesContext(project, null);
 
         var command = new UseItemCommand(player, 1);
-        Assert.True(command.Execute(world, items));
+        Assert.True(command.Execute(world));
         Assert.Equal(health.MaxHp, health.CurrentHp);
         Assert.Empty(inventory.Stacks);
     }
@@ -79,8 +90,13 @@ public class ItemCommandTests
         }
     }
 
-    private static Entity CreatePlayer(World world, Position position)
+    private static Entity CreatePlayer(World world, Position position, GameRulesContext? rules = null)
     {
+        if (rules is not null)
+        {
+            world.Rules = rules;
+        }
+
         var player = new Entity();
         player.AddComponent(new ActorIdComponent("player"));
         player.AddComponent(new PositionComponent(position));

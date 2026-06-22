@@ -2,7 +2,7 @@
 
 Living development plan for the **rogueengine** repository. Update this file as phases complete.
 
-**Current status:** `0.9 — Items, World Toolkit & editor` (inventory, pluggable generators, bitmask autotile, overworld MVP)
+**Current status:** `1.0 — Extensible game rules` (items v2, interactions, classes, quests, script hooks)
 
 **Last updated:** 2026-06-20
 
@@ -25,7 +25,7 @@ Living development plan for the **rogueengine** repository. Update this file as 
 | **0.8.1** | Items & inventory | JSON schema, pickup, use, equip | Done |
 | **0.9** | World Toolkit | ProcGen lib, bitmask, overworld, generator picker | Done |
 | **0.10** | Installer | MSI/EXE via WiX | Not started |
-| **1.0** | Initial release | Engine usable for at least two sample games | Not started |
+| **1.0** | Extensible game rules | Items v2, interactions, classes, quests, script hooks, RpgDemo | Done |
 
 ---
 
@@ -135,9 +135,12 @@ Living development plan for the **rogueengine** repository. Update this file as 
 - [x] AI uses pathfinding (`ChaseAI` + `IGridNavigator`)
 - [x] Scene entity placements spawn in runtime (`WorldBuilder` + `defaultScene`)
 - [x] Items & inventory (JSON schema, pickup, use, equip) — **v0.8.1**
-- [ ] Interaction system (doors, stairs, usable tiles)
+- [x] Interaction system (doors, stairs, usable tiles, scene placements) — **v1.0**
+- [x] Classes / archetypes (`Data/classes`, spawn stats + start items) — **v1.0**
+- [x] Quest system (objectives, rewards, event-driven progress) — **v1.0**
+- [x] Script hooks: `IItemEffect`, `IInteractionHandler`, `IQuestObjectiveChecker` — **v1.0**
 
-**Module:** `RogueEngine.Toolkit` (FOV + Pathfinding)
+**Module:** `RogueEngine.Engine` (Rules), `RogueEngine.Toolkit` (FOV + Pathfinding)
 
 ---
 
@@ -209,6 +212,12 @@ The MVP is **done** when all items below pass:
 | CA-17 | Overworld with ≥3 connected regions; enter region loads local map | 9 | Done |
 | CA-18 | Editor: create project, pick generator, playtest without manual JSON editing | 6 |
 | CA-19 | Custom `IMapGenerator` registrable from game script | 9 |
+| CA-1.0a | Equipped weapon increases bump-attack damage | 1.0 | Done |
+| CA-1.0b | Keyed door opens only with matching `keyId` in inventory | 1.0 | Done |
+| CA-1.0c | Kill quest completes and grants reward items | 1.0 | Done |
+| CA-1.0d | Default class spawns player with JSON start items/stats | 1.0 | Done |
+| CA-1.0e | Item `onUse.script` runs custom `IItemEffect` | 1.0 | Done |
+| CA-1.0f | Quest `script` objective uses `IQuestObjectiveChecker` | 1.0 | Done |
 
 ---
 
