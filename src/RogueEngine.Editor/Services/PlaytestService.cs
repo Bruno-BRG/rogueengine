@@ -16,14 +16,29 @@ public sealed class PlaytestService : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(reprojPath);
         Stop();
 
-        var runtimeCsproj = RuntimeProjectLocator.LocateRuntimeCsproj();
-        var startInfo = new ProcessStartInfo
+        ProcessStartInfo startInfo;
+        if (RuntimeProjectLocator.TryLocateRuntimeTemplate(out var templateDirectory))
         {
-            FileName = "dotnet",
-            Arguments = $"run --project \"{runtimeCsproj}\" -- \"{reprojPath}\"",
-            UseShellExecute = false,
-            CreateNoWindow = false
-        };
+            var runtimeExe = Path.Combine(templateDirectory, "RogueEngine.Runtime.exe");
+            startInfo = new ProcessStartInfo
+            {
+                FileName = runtimeExe,
+                Arguments = $"\"{reprojPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = false
+            };
+        }
+        else
+        {
+            var runtimeCsproj = RuntimeProjectLocator.LocateRuntimeCsproj();
+            startInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"run --project \"{runtimeCsproj}\" -- \"{reprojPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = false
+            };
+        }
 
         _activeProcess = Process.Start(startInfo)
             ?? throw new InvalidOperationException("Failed to start playtest process.");

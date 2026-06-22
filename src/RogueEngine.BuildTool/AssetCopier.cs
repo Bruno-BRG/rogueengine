@@ -39,6 +39,13 @@ public static class AssetCopier
     {
         Directory.CreateDirectory(destinationDirectory);
 
+        CopyDirectoryContents(sourceDirectory, destinationDirectory);
+    }
+
+    public static void CopyDirectoryContents(string sourceDirectory, string destinationDirectory)
+    {
+        Directory.CreateDirectory(destinationDirectory);
+
         foreach (var directory in Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories))
         {
             Directory.CreateDirectory(directory.Replace(sourceDirectory, destinationDirectory, StringComparison.Ordinal));

@@ -88,8 +88,16 @@ public static class BuildCommand
 
     private static void PublishRuntime(string outputDirectory, string projectName)
     {
+        if (RuntimeProjectLocator.TryLocateRuntimeTemplate(out var templateDirectory))
+        {
+            BuildLogger.Info($"Copying bundled runtime from {templateDirectory}");
+            AssetCopier.CopyDirectoryContents(templateDirectory, outputDirectory);
+            RenameRuntimeExecutable(outputDirectory, projectName);
+            return;
+        }
+
         var runtimeCsproj = RuntimeProjectLocator.LocateRuntimeCsproj();
-        BuildLogger.Info("Publishing runtime...");
+        BuildLogger.Info("Publishing runtime with dotnet publish...");
 
         var startInfo = new ProcessStartInfo
         {

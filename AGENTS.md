@@ -147,4 +147,4 @@ dotnet test
 dotnet run --project src/RogueEngine.Runtime
 ```
 
-Build tool (Phase 5+): `rogueengine build` — not implemented yet.
+Build tool: `rogueengine build <game.reproj> [--output <dir>]`. Publish portable engine + sample game: `scripts/publish-dist.ps1`; install locally: `installer/install-engine.ps1`.

@@ -123,11 +123,20 @@ Full version milestones, implementation phases, MVP criteria, and technical back
 dotnet build
 dotnet test
 dotnet run --project src/RogueEngine.Editor
-dotnet run --project src/RogueEngine.Runtime -- templates/BasicRoguelikeProject/game.reproj
-dotnet run --project src/RogueEngine.BuildTool -- build templates/BasicRoguelikeProject/game.reproj
+dotnet run --project src/RogueEngine.Runtime -- templates/RpgDemoProject/game.reproj
+dotnet run --project src/RogueEngine.BuildTool -- build templates/RpgDemoProject/game.reproj
 ```
 
-Exported game runs as: `Build/BasicRoguelike.exe game.reproj`
+Portable distribution (editor + build tool + sample game export):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/publish-dist.ps1
+# Engine: dist/engine/Editor/RogueEngine.Editor.exe
+# Game:   dist/games/RpgDemo/RpgDemo.exe
+powershell -ExecutionPolicy Bypass -File installer/install-engine.ps1
+```
+
+Exported game runs as: `Build/GameName.exe` (auto-loads `game.reproj` in the same folder)
 
 ## License
 

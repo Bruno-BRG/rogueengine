@@ -178,6 +178,8 @@ Dedicated C# library to **maximize ease of use** for game creators. Full spec: [
 
 ### Phase 11 — Installer (→ v0.10)
 
+- [x] Portable engine ZIP (`scripts/publish-dist.ps1`) + sample game export
+- [x] Local install script (`installer/install-engine.ps1`, PATH + desktop shortcut)
 - [ ] WiX MSI/EXE packaging for editor + runtime distribution
 
 ---
