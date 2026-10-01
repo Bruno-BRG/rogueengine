@@ -1,0 +1,13 @@
+[package]
+name = "rogue-host"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+rogue-core = { path = "../rogue-core" }
+rogue-script = { path = "../rogue-script" }
+rogue-graph = { path = "../rogue-graph" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

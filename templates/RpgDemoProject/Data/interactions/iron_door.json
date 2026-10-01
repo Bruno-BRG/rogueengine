@@ -1,6 +1,0 @@
-{
-  "id": "iron_door",
-  "kind": "door",
-  "requiredKeyId": "iron",
-  "message": "The iron door swings open."
-}

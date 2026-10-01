@@ -1,143 +1,59 @@
 # RogueEngine
 
-A specialized 2D tile-based roguelike engine in C#. RogueEngine is not a general-purpose game engine like Unity or Godot — it focuses on a narrower domain: grid maps, entities, turn-based gameplay, procedural generation, field of view, pathfinding, gameplay scripts, and exporting finished games as executables or installers.
+An open-source engine and editor for 2D tile-based roguelikes. **Rust core + Lua scripting + Tauri editor.**
 
-**Status:** v1.0 — extensible game rules (items v2, interactions, classes, quests, script hooks). See [`docs/EXTENDING.md`](docs/EXTENDING.md).
+> **Status: v0.1 foundation.** The rules core, Lua scripting, mod system, visual-script compiler, sprite-editor
+> core and an editor shell are in place and tested. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for what is done and what is next.
+> This is a ground-up rewrite; the earlier C#/SadConsole engine was removed (it is in git history).
 
-## What is this?
+## Principles
 
-RogueEngine provides a modular platform for building roguelike games with C# as the primary language and [SadConsole](https://sadconsole.com/) as the rendering and input adapter. Game logic lives in `RogueEngine.Engine`, which stays decoupled from SadConsole so the core can be tested without a graphical window and could support other renderers in the future.
+1. **Everything is moddable.** The engine's own rules (damage, AI, new-game, item effects, player commands) are
+   plain Lua in the `base` mod. Mods replace or extend them; Rust plugins can extend the Lua API.
+2. **Visual and text scripting are the same thing.** Node graphs compile to Lua.
+3. **Core is UI-free.** `rogue-core` has no Lua, no Tauri, no window — it is unit-tested headless.
+4. **Batteries included.** Inventory, equipment, items, FOV, A*, procgen, grid physics, turn scheduler, animation.
 
-## Core principle
+## Layout
 
-> *SadConsole is the screen; RogueEngine.Engine is the game rules.*
+| Path | What |
+|------|------|
+| `crates/rogue-core` | World, entities, tilemap, turns (energy), FOV, A*, procgen, inventory/equipment, grid physics |
+| `crates/rogue-script` | Embedded Lua 5.4 (`mlua`), the `rogue.*` API, mod loader, data registry, `Plugin` trait |
+| `crates/rogue-graph` | Visual graph → Lua compiler; node types are data (mods can add nodes) |
+| `crates/rogue-assets` | Sprite editor core (tools, undo/redo, PNG), animation clips & state machine |
+| `crates/rogue-host` | Runs the engine on its own thread behind a JSON request/response protocol |
+| `src-tauri` | Tauri 2 app: thin command layer over `rogue-host` / `rogue-assets` |
+| `editor` | Editor UI (Vite + TypeScript): game view, visual script, sprite editor, Lua console |
+| `mods` | Example mods |
+| `docs` | Architecture, modding guide, roadmap |
 
-## Architecture at a glance
-
-```
-Developer → RogueEngine.Editor → game.reproj
-                ↓
-         RogueEngine.Runtime ← RogueEngine.Engine ← game assets & scripts
-                ↓
-         RogueEngine.SadConsole → SadConsole → MonoGame / window / input
-
-RogueEngine.BuildTool → dotnet publish → portable ZIP / EXE / installer
-```
-
-See the full architecture diagram in [docs/rendered/01_contexto_arquitetura.svg](docs/rendered/01_contexto_arquitetura.svg). Note: planning documents in `docs/` still use the legacy draft name **MomoRogue**; RogueEngine is the canonical product name going forward.
-
-## Repository layout
-
-| Path | Purpose |
-|------|---------|
-| `src/RogueEngine.Engine/` | Core game rules — world, entities, systems, save/load. No UI dependencies. |
-| `src/RogueEngine.Toolkit/` | FOV, pathfinding, procgen, bitmask autotile, overworld helpers. |
-| `src/RogueEngine.SadConsole/` | Renderer and input adapter for SadConsole. |
-| `src/RogueEngine.Runtime/` | Application that loads and runs a game project. |
-| `src/RogueEngine.Editor/` | Desktop editor for creating and configuring projects (Avalonia). |
-| `src/RogueEngine.BuildTool/` | CLI for validating, compiling, and exporting games. |
-| `templates/` | Starter game project templates. |
-| `samples/` | Example games built with the engine. |
-| `tests/` | Unit and integration tests. |
-| `docs/` | Architecture document, Mermaid diagrams, and rendered figures. |
-
-## Tech stack
-
-| Layer | Choice |
-|-------|--------|
-| Language | [C#](https://learn.microsoft.com/dotnet/csharp/) / [.NET](https://dotnet.microsoft.com/) |
-| Rendering | [SadConsole](https://sadconsole.com/) |
-| Editor UI | [Avalonia](https://docs.avaloniaui.net/) |
-| Scripting | C# + [Roslyn](https://github.com/dotnet/roslyn) |
-| Export | `dotnet publish`, [WiX](https://www.firegiant.com/wixtoolset/) (installer, later) |
-| Initial target | Windows x64 |
-
-## Game project structure (planned)
-
-A game created with RogueEngine is a versionable folder:
-
-```
-MyGame/
-  game.reproj
-  Assets/
-    Tilesets/
-    Audio/
-    Fonts/
-  Data/
-    actors.json
-    items.json
-    maps.json
-  Scripts/
-    PlayerController.cs
-  VisualScripts/
-    door_interaction.graph.json
-  Build/
-```
-
-The starter templates live in `templates/BasicRoguelikeProject/` and `templates/RpgDemoProject/` (v1.0 RPG demo with classes, quests, interactions).
-
-## Extending with scripts
-
-JSON covers common item effects, doors, and quest objectives. For custom mechanics, add a C# class in `Scripts/` and reference it from JSON:
-
-| Hook | Interface |
-|------|-----------|
-| Item `onUse.script` | `IItemEffect` |
-| Interaction `script` | `IInteractionHandler` |
-| Quest objective `script` | `IQuestObjectiveChecker` |
-| Actor `behavior` | `IBehavior` |
-
-Full guide: **[`docs/EXTENDING.md`](docs/EXTENDING.md)**
-
-## Roadmap
-
-**Current version:** 1.0 (extensible game rules)
-
-Full version milestones, implementation phases, MVP criteria, and technical backlog: **[`docs/ROADMAP.md`](docs/ROADMAP.md)**
-
-| Version | Focus |
-|---------|-------|
-| 0.1 | Minimal runtime |
-| 0.2 | Minimal roguelike |
-| 0.3 | Data & `game.reproj` |
-| 0.4–0.5 | Scripting & portable build |
-| 0.6 | Basic editor |
-| 0.7 | Visual scripting MVP |
-| 0.8–0.10 | FOV, World Toolkit, installer |
-| **1.0** | Extensible game rules (items v2, interactions, classes, quests) |
-
-## Documentation
-
-| Resource | Location |
-|----------|----------|
-| Roadmap (living) | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
-| Extending (JSON + scripts) | [`docs/EXTENDING.md`](docs/EXTENDING.md) |
-| AI agent guide | [`AGENTS.md`](AGENTS.md) |
-| Doc index | [`docs/README.md`](docs/README.md) |
-| Architecture PDF | [`docs/planning/`](docs/planning/) |
-| Diagrams | [`docs/diagrams/`](docs/diagrams/), [`docs/rendered/`](docs/rendered/) |
-
-## Getting started
+## Build & test
 
 ```bash
-dotnet build
-dotnet test
-dotnet run --project src/RogueEngine.Editor
-dotnet run --project src/RogueEngine.Runtime -- templates/RpgDemoProject/game.reproj
-dotnet run --project src/RogueEngine.BuildTool -- build templates/RpgDemoProject/game.reproj
+# Engine crates: Rust only, no system libs needed
+cargo test --workspace
+
+# Editor UI typecheck + bundle
+npm install && npm run build
+
+# Desktop app (needs Tauri system deps: https://tauri.app/start/prerequisites/)
+npm run tauri dev
 ```
 
-Portable distribution (editor + build tool + sample game export):
+## A mod in 10 lines
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/publish-dist.ps1
-# Engine: dist/engine/Editor/RogueEngine.Editor.exe
-# Game:   dist/games/RpgDemo/RpgDemo.exe
-powershell -ExecutionPolicy Bypass -File installer/install-engine.ps1
+```toml
+# mods/my-mod/mod.toml
+id = "my-mod"
+depends = ["base"]
+```
+```lua
+-- mods/my-mod/main.lua
+rogue.rules.damage = function(attacker, target)          -- replace a core rule
+  return rogue.default_damage(attacker, target) * 2
+end
+rogue.on("died", function(ev) rogue.log("something died") end)   -- react to events
 ```
 
-Exported game runs as: `Build/GameName.exe` (auto-loads `game.reproj` in the same folder)
-
-## License
-
-TBD
+More: [`docs/MODDING.md`](docs/MODDING.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)

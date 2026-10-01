@@ -1,9 +1,0 @@
-{
-  "id": "iron_key",
-  "name": "Iron Key",
-  "glyph": "-",
-  "color": { "r": 200, "g": 200, "b": 100 },
-  "kind": "key",
-  "keyId": "iron",
-  "maxStack": 1
-}

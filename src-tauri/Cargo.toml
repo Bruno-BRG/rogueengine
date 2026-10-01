@@ -1,0 +1,19 @@
+[package]
+name = "rogueengine-app"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+# Standalone workspace: Tauri needs system WebView libs, so it is built separately
+# from the pure-Rust crates in the root workspace (which build and test anywhere).
+[workspace]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rogue-host = { path = "../crates/rogue-host" }
+rogue-assets = { path = "../crates/rogue-assets" }

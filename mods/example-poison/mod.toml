@@ -1,0 +1,6 @@
+id = "example-poison"
+name = "Example: Poison"
+version = "0.1.0"
+depends = ["base"]
+data = ["data.json"]
+entry = "main.lua"

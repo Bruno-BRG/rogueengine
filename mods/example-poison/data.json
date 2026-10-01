@@ -1,0 +1,10 @@
+{
+  "entities": {
+    "goblin": { "$patch": true, "stats": { "hp": 12, "max_hp": 12 } },
+    "spider": {
+      "name": "Giant Spider", "glyph": "S", "blocks": true,
+      "stats": { "hp": 6, "max_hp": 6, "attack": 2, "defense": 0, "speed": 120 },
+      "tags": ["actor", "monster", "venomous"]
+    }
+  }
+}

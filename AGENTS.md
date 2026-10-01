@@ -2,149 +2,32 @@
 
 Instructions for AI coding agents working in this repository.
 
-## Project summary
+## What this is
 
-**RogueEngine** (`rogueengine`) is a specialized C# engine for 2D tile-based roguelikes. It is **not** a general-purpose game engine. Scope is intentionally narrow: grid maps, entities, turn-based rules, procgen, FOV, pathfinding, scripting, and game export.
+RogueEngine: open-source engine + editor for 2D tile-based roguelikes. **Rust core, Lua scripting, Tauri editor.**
+Scope is deliberately narrow (grid maps, entities, turns, procgen, FOV, pathfinding, scripting, mods) — not a general engine.
+This is a ground-up rewrite; the old C# engine is in git history only.
 
-**Status:** v1.0 — extensible game rules (items v2, interactions, classes, quests, script hooks). Phases 1–9 + v1.0 rules done; installer → v0.10.
+## Architecture rules
 
-## Canonical naming
+- `rogue-core` must not depend on Lua, Tauri, or any UI. Game rules live here or in Lua — never in the frontend.
+- Lua reaches the world **only** through `rogue.*` (`crates/rogue-script/src/api.rs`). Never call Lua while the
+  `World` `RefCell` is borrowed (re-entrancy panic). Formulas that mods should change belong in Lua (`lua/base/main.lua`)
+  as overridable `rogue.rules.*`, not hard-coded in Rust.
+- `rogue-host` is the single protocol surface for any frontend. Add UI features as `Request`/`Response` variants there,
+  keep `src-tauri` a thin pass-through, and keep `editor/src/api.ts` types in sync (the wire-format test guards this).
+- `src-tauri` is **its own cargo workspace** (needs WebView system libs); the root workspace must keep building headless.
+- Node types, tiles and entities are data (JSON / Lua tables) so mods can add them without Rust changes.
 
-| Context | Use |
-|---------|-----|
-| Repository / CLI | `rogueengine` |
-| Product / assemblies | `RogueEngine` |
-| Namespaces | `RogueEngine.*` |
-| Game project file | `game.reproj` |
-| Build command (future) | `rogueengine build` |
+## Workflow
 
-Legacy name **MomoRogue** appears only in older planning PDFs/diagrams under `docs/planning/`. New code and docs must use **RogueEngine**.
+1. Read `docs/ROADMAP.md`; pick one item; keep scope small.
+2. Match existing patterns. Public Lua API changes → update `docs/MODDING.md`.
+3. Verify: `cargo test --workspace` and `npm run build`. Add a test for every rule/bug fix (tests live next to the crate).
+4. Tick `docs/ROADMAP.md` when a deliverable lands.
+5. Commit/PR only when the user asks; never force-push `main`.
 
-## Core architectural rule
+## Security note
 
-> **SadConsole is the screen; RogueEngine.Engine is the game rules.**
-
-| Module | May depend on | Must not depend on |
-|--------|---------------|-------------------|
-| `RogueEngine.Engine` | BCL only | SadConsole, Avalonia, UI |
-| `RogueEngine.Toolkit` | Engine | SadConsole, Avalonia, UI |
-| `RogueEngine.SadConsole` | Engine, SadConsole | Avalonia |
-| `RogueEngine.Runtime` | Engine, SadConsole adapter | Editor UI |
-| `RogueEngine.Editor` | Engine, BuildTool (later) | — |
-| `RogueEngine.BuildTool` | Engine, Roslyn, dotnet CLI | SadConsole, Avalonia |
-
-Engine logic must be testable **without** opening a graphical window. Use `IRenderer` (or equivalent) at boundaries.
-
-## Repository layout
-
-```
-src/RogueEngine.Engine/       # Core: World, Entity, systems, save/load
-src/RogueEngine.Toolkit/      # FOV, pathfinding (v0.8); procGen/bitmask/overworld (v0.9)
-src/RogueEngine.SadConsole/   # Render + input adapter
-src/RogueEngine.Runtime/      # Runs a game project
-src/RogueEngine.Editor/       # Avalonia desktop tool (later phases)
-src/RogueEngine.BuildTool/    # CLI export pipeline (later phases)
-tests/                        # xUnit (or project default) tests
-templates/                    # Starter game projects
-samples/                      # Example games
-docs/                         # ROADMAP, architecture PDF, diagrams
-```
-
-## Read before coding
-
-1. [`README.md`](README.md) — overview and links
-2. [`docs/ROADMAP.md`](docs/ROADMAP.md) — **current phase, backlog, MVP criteria** (update when completing work)
-3. [`docs/planning/documento_desenvolvimento_momorogue.pdf`](docs/planning/documento_desenvolvimento_momorogue.pdf) — full spec (legacy naming)
-4. [`docs/diagrams/`](docs/diagrams/) — architecture diagrams
-
-## What to build next
-
-Follow [`docs/ROADMAP.md`](docs/ROADMAP.md). **Phase 1** is the active target:
-
-- .NET solution + project references
-- `World`, `TileMap`, `Entity`, basic components
-- Minimal SadConsole renderer
-- Input → commands
-- Movement and collision
-
-Do not jump ahead to editor, visual scripting, or installer unless explicitly requested.
-
-## C# conventions (when adding code)
-
-- **Target:** .NET (LTS version TBD at Phase 1; prefer current LTS)
-- **Style:** idiomatic C#, `nullable` enabled, clear public APIs on Engine
-- **ECS:** pragmatic entities + typed components + systems — not pure ECS dogma
-- **Tests:** unit tests for Engine rules in `tests/RogueEngine.Engine.Tests/`; no window required
-- **Namespaces:** match folder/project name (`RogueEngine.Engine.Core`, etc.)
-- **Public API:** game scripts and JSON loaders only touch documented public surface; keep internals `internal`
-
-### Dependency direction (allowed)
-
-```
-Engine ← Toolkit, SadConsole, Runtime, BuildTool, Editor
-Engine ← Tests
-Toolkit ← Runtime, Editor, BuildTool, Tests
-```
-
-Never: `Engine → SadConsole` or `Engine → Avalonia`.
-
-## Out of scope (do not add without explicit request)
-
-- Generic physics, 3D, multiplayer
-- Unity/Godot-scale editor features
-- Mobile, marketplace, mod sandbox
-- Rewriting the LaTeX planning doc (unless asked)
-- Large refactors unrelated to the current task
-
-## Agent workflow
-
-1. **Scope small** — one phase item or backlog ID at a time
-2. **Match existing patterns** — read surrounding code before adding abstractions
-3. **Verify** — `dotnet build`, `dotnet test` when solution exists
-4. **Update docs** — check off items in `docs/ROADMAP.md` when a phase deliverable is done
-5. **Commits** — only when the user asks; never force-push `main`
-6. **graphify** — if `graphify-out/graph.json` exists, use `graphify query` for codebase questions; run `graphify update .` after C# changes
-
-## Extending with scripts (v1.0)
-
-JSON first; C# when built-in registries are not enough. Public interfaces in `RogueEngine.Engine.Scripting/`:
-
-| JSON hook | Interface |
-|-----------|-----------|
-| Item `onUse.script` | `IItemEffect` |
-| Interaction `script` | `IInteractionHandler` |
-| Quest objective `type: script` | `IQuestObjectiveChecker` |
-
-See [`docs/EXTENDING.md`](docs/EXTENDING.md). Rules layer: `GameRulesContext`, `GameEvents`, registries under `RogueEngine.Engine.Rules/`.
-
-## Game project format (reference)
-
-Games are folders, not monolithic binaries:
-
-```
-MyGame/
-  game.reproj
-  Assets/  Data/  Scripts/  VisualScripts/  Build/
-```
-
-Template lives in `templates/BasicRoguelikeProject/` (Phase 3).
-
-## Definition of done (from spec)
-
-A feature is done when it:
-
-- Lives in the correct module
-- Has a unit test or documented manual test reason
-- Does not leak UI deps into Engine
-- Logs errors where applicable
-- Is reflected in `docs/ROADMAP.md` if it closes a milestone item
-
-## Useful commands (after Phase 1)
-
-```bash
-dotnet build
-dotnet test
-dotnet run --project src/RogueEngine.Runtime
-```
-
-Build tool: `rogueengine build <game.reproj> [--output <dir>]`. Publish portable engine + sample game: `scripts/publish-dist.ps1`; install locally: `installer/install-engine.ps1`.
+Lua is stripped of `io`, `debug`, `dofile`, `loadfile` and dangerous `os.*`, but this is **not** a hostile-code sandbox.
+Document mods as "trusted code, like plugins". Graph compilation must keep escaping string literals (`lua_string`).

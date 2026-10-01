@@ -1,0 +1,30 @@
+{
+  "tiles": {
+    "floor": { "name": "Floor", "glyph": "." },
+    "wall":  { "name": "Wall", "glyph": "#", "walkable": false, "transparent": false },
+    "door":  { "name": "Door", "glyph": "+", "transparent": false, "tags": ["door"] }
+  },
+  "entities": {
+    "player": {
+      "name": "You", "glyph": "@", "blocks": true,
+      "stats": { "hp": 30, "max_hp": 30, "attack": 4, "defense": 1, "speed": 100 },
+      "tags": ["actor", "player"],
+      "inventory": { "capacity": 20 }
+    },
+    "goblin": {
+      "name": "Goblin", "glyph": "g", "blocks": true,
+      "stats": { "hp": 8, "max_hp": 8, "attack": 3, "defense": 0, "speed": 100 },
+      "tags": ["actor", "monster"],
+      "data": { "sight": 8 }
+    },
+    "potion_heal": {
+      "name": "Healing Potion", "glyph": "!",
+      "item": { "on_use": "heal", "stackable": true },
+      "data": { "heal_amount": 10 }
+    },
+    "iron_sword": {
+      "name": "Iron Sword", "glyph": "/",
+      "item": { "slot": "weapon", "modifiers": { "attack": 3 } }
+    }
+  }
+}
