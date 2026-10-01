@@ -18,7 +18,7 @@ fn full_game_loop_over_the_json_protocol() {
     assert_eq!((s.width, s.height), (60, 36));
     assert_eq!(s.tiles.len(), 60 * 36);
     assert!(s.player.is_some() && s.hp > 0);
-    assert!(s.fog.iter().any(|f| *f == 2), "player must see something");
+    assert!(s.fog.contains(&2), "player must see something");
 
     // deterministic: same seed → same level
     let s2 = state(host.request(Request::NewGame { seed: 5, width: 60, height: 36 }));
@@ -75,4 +75,22 @@ fn wire_format_matches_the_frontend_types() {
     assert!(v["player"]["id"].is_u64());
     let err = serde_json::to_value(host.request(Request::Exec { code: "(".into() })).unwrap();
     assert_eq!(err["type"], "error");
+}
+
+#[test]
+fn console_eval_returns_values_and_runs_statements() {
+    let host = Host::spawn(None);
+    host.request(Request::NewGame { seed: 4, width: 40, height: 24 });
+    let v = |code: &str| match host.request(Request::Eval { code: code.into() }) {
+        Response::Value { value } => value,
+        o => panic!("{o:?}"),
+    };
+    assert_eq!(v("1 + 2"), json!(3));
+    assert_eq!(v("rogue.find_tagged('player')[1] ~= nil"), json!(true));
+    assert_eq!(v("rogue.get(rogue.find_tagged('player')[1]).stats.max_hp"), json!(30));
+    assert_eq!(v("rogue.set_data(rogue.find_tagged('player')[1], 'x', 5)"), json!(null), "statements return null");
+    assert_eq!(v("rogue.get_data(rogue.find_tagged('player')[1], 'x')"), json!(5));
+    assert!(v("print").as_str().unwrap().starts_with("function"));
+    assert!(matches!(host.request(Request::Eval { code: "error('boom')".into() }), Response::Error { message } if message.contains("boom")));
+    assert!(matches!(host.request(Request::Snapshot), Response::State(_)));
 }

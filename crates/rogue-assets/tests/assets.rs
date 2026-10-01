@@ -93,7 +93,23 @@ fn ops_are_json_driven() {
     }
     let v = ed.view();
     assert_eq!((v.frame, v.frame_count), (0, 2));
-    assert_eq!(&v.pixels[(1 * 4 + 1) * 4..(1 * 4 + 1) * 4 + 4], &[255, 0, 0, 255]);
+    let i = (4 + 1) * 4;
+    assert_eq!(&v.pixels[i..i + 4], &[255, 0, 0, 255]);
     assert_eq!(&v.pixels[0..4], &[0, 0, 0, 0], "rect was drawn on frame 1, not frame 0");
     ed.apply(serde_json::from_str(r#"{"op":"undo"}"#).unwrap());
+}
+
+#[test]
+fn a_stroke_is_one_undo_step() {
+    let mut ed = SpriteEditor::new(Sprite::new("s", 8, 8));
+    let op = |j: &str| serde_json::from_str::<SpriteOp>(j).unwrap();
+    ed.apply(op(r#"{"op":"stroke_start"}"#));
+    for x in 0..5 {
+        ed.apply(op(&format!(r#"{{"op":"pixel","x":{x},"y":0,"color":[1,2,3,255]}}"#)));
+    }
+    ed.apply(op(r#"{"op":"stroke_end"}"#));
+    assert_eq!(ed.sprite.get(0, 4, 0), Some([1, 2, 3, 255]));
+    ed.apply(op(r#"{"op":"undo"}"#));
+    assert_eq!(ed.sprite.get(0, 0, 0), Some([0, 0, 0, 0]), "whole stroke undone at once");
+    assert_eq!(ed.sprite.get(0, 4, 0), Some([0, 0, 0, 0]));
 }

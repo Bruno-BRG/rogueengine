@@ -19,6 +19,10 @@ pub enum Request {
     Act { action: String, #[serde(default)] arg: Value },
     /// Run Lua in the live game (editor console).
     Exec { code: String },
+    /// Console: evaluate Lua in the live game and return the value.
+    Eval { code: String },
+    /// Current game state without taking a turn.
+    Snapshot,
     /// Compile a visual graph to Lua without running it.
     CompileGraph { graph: Graph },
     /// Compile a graph and load it into the running game.
@@ -35,6 +39,7 @@ fn default_h() -> i32 { 36 }
 pub enum Response {
     State(Box<Snapshot>),
     Lua { code: String },
+    Value { value: Value },
     Nodes { nodes: Vec<rogue_graph::NodeDef> },
     Mods { mods: Vec<ModInfo> },
     Ok,
@@ -58,6 +63,8 @@ pub struct EntityView {
     pub glyph: Option<char>,
     pub sprite: Option<String>,
     pub color: Option<String>,
+    pub hp: Option<i32>,
+    pub max_hp: Option<i32>,
 }
 
 #[derive(Debug, Serialize)]
@@ -186,6 +193,13 @@ impl Session {
                 self.engine()?.dispatch_events().map_err(|e| e.to_string())?;
                 self.snapshot()
             }
+            Request::Eval { code } => {
+                let engine = self.engine()?;
+                let value = engine.eval_console(&code).map_err(|e| e.to_string())?;
+                engine.dispatch_events().map_err(|e| e.to_string())?;
+                Ok(Response::Value { value })
+            }
+            Request::Snapshot => self.snapshot(),
             Request::CompileGraph { graph } => {
                 let code = rogue_graph::compile(&graph, &self.graphs).map_err(|e| e.to_string())?;
                 Ok(Response::Lua { code })
@@ -225,7 +239,7 @@ impl Session {
                 fog[(p.y * world.map.width + p.x) as usize] = 2;
             }
         }
-        let view = |id: rogue_core::EntityId| world.get(id).map(|e| EntityView { id: id.to_u64(), x: e.pos.x, y: e.pos.y, name: e.name.clone(), kind: e.kind.clone(), glyph: e.glyph, sprite: e.sprite.clone(), color: e.color.clone() });
+        let view = |id: rogue_core::EntityId| world.get(id).map(|e| EntityView { id: id.to_u64(), x: e.pos.x, y: e.pos.y, name: e.name.clone(), kind: e.kind.clone(), glyph: e.glyph, sprite: e.sprite.clone(), color: e.color.clone(), hp: e.stats.as_ref().map(|s| s.hp), max_hp: e.stats.as_ref().map(|_| world.stat(id, "max_hp")) });
         let entities = world.ids().filter(|id| world.get(*id).is_some_and(|e| e.carried_by.is_none() && visible.contains(&e.pos))).filter_map(view).collect();
         let (hp, max_hp) = player_id.and_then(|id| world.get(id)?.stats.as_ref().map(|s| (s.hp, world.stat(id, "max_hp")))).unwrap_or((0, 0));
         let inventory = player_id.and_then(|id| world.get(id)?.inventory.as_ref()).map(|inv| {

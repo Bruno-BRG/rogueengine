@@ -1,59 +1,71 @@
 # RogueEngine
 
-An open-source engine and editor for 2D tile-based roguelikes. **Rust core + Lua scripting + Tauri editor.**
+An open-source engine **and editor** for 2D tile-based roguelikes. Rust core · Lua scripting · Tauri editor.
 
-> **Status: v0.1 foundation.** The rules core, Lua scripting, mod system, visual-script compiler, sprite-editor
-> core and an editor shell are in place and tested. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for what is done and what is next.
-> This is a ground-up rewrite; the earlier C#/SadConsole engine was removed (it is in git history).
+> **Status: v0.2 — MVP.** You can create a game, draw its sprites, design monsters and items, script rules visually
+> or in Lua, and play it — all inside the editor. See [`docs/ROADMAP.md`](docs/ROADMAP.md) for what's next.
 
-## Principles
+## What you can do today
 
-1. **Everything is moddable.** The engine's own rules (damage, AI, new-game, item effects, player commands) are
-   plain Lua in the `base` mod. Mods replace or extend them; Rust plugins can extend the Lua API.
-2. **Visual and text scripting are the same thing.** Node graphs compile to Lua.
-3. **Core is UI-free.** `rogue-core` has no Lua, no Tauri, no window — it is unit-tested headless.
-4. **Batteries included.** Inventory, equipment, items, FOV, A*, procgen, grid physics, turn scheduler, animation.
+| Tab | |
+|-----|---|
+| **Play** | Run your game instantly (F5): sprite renderer, fog of war, HUD, inventory/equipment, message log, death screen, live **Lua console** (`` ` ``). |
+| **Visual Script** | Node graphs → Lua. Typed pins, drag-to-wire, searchable palette (`Space`), undo/redo, live generated-Lua panel, 55+ nodes. |
+| **Sprites** | Pixel editor: pencil, eraser, line, rect, fill, picker, flip, frames, animation preview, undo/redo, PNG import/export. Auto-saved. |
+| **Objects** | Forms for monsters, items, weapons, armor, potions and tiles. Edit built-ins as overrides. Spawn rules by floor and weight. |
+| **Lua Scripts** | CodeMirror editor, `rogue.*` autocomplete, live syntax check, clickable API reference. |
+
+The starter project ("Dungeon crawler") is playable immediately: 5 floors of monsters, XP/levels, potions, weapons, armor, stairs.
+
+## Everything is moddable
+
+The engine's own rules — damage, AI, player commands, level generation, item effects, HUD — are plain Lua in the
+embedded `base` mod. Your project (and any mod) loads after it and can replace any of them:
+
+```lua
+rogue.rules.damage = function(attacker, target)          -- 10% criticals
+  local d = rogue.default_damage(attacker, target)
+  return rogue.chance(0.1) and d * 2 or d
+end
+rogue.on("died", function(ev) rogue.log(ev.name .. " is no more") end)
+```
+New monsters/items are *data* (no code): add an object with a `spawn` rule and it appears in generated dungeons.
+See [`docs/MODDING.md`](docs/MODDING.md).
 
 ## Layout
 
 | Path | What |
 |------|------|
-| `crates/rogue-core` | World, entities, tilemap, turns (energy), FOV, A*, procgen, inventory/equipment, grid physics |
-| `crates/rogue-script` | Embedded Lua 5.4 (`mlua`), the `rogue.*` API, mod loader, data registry, `Plugin` trait |
-| `crates/rogue-graph` | Visual graph → Lua compiler; node types are data (mods can add nodes) |
+| `crates/rogue-core` | World, entities, tilemap, energy turns, FOV, A*, procgen, inventory/equipment, grid physics |
+| `crates/rogue-script` | Lua 5.4 (`mlua`), `rogue.*` API, mod loader, data registry, `Plugin` trait |
+| `crates/rogue-graph` | Visual graph → Lua compiler; node types are JSON (mods can add nodes) |
 | `crates/rogue-assets` | Sprite editor core (tools, undo/redo, PNG), animation clips & state machine |
-| `crates/rogue-host` | Runs the engine on its own thread behind a JSON request/response protocol |
-| `src-tauri` | Tauri 2 app: thin command layer over `rogue-host` / `rogue-assets` |
-| `editor` | Editor UI (Vite + TypeScript): game view, visual script, sprite editor, Lua console |
+| `crates/rogue-host` | Runs the engine on its own thread behind a JSON protocol |
+| `crates/rogue-studio` | Projects on disk, sprites, graphs, scripts, objects; `rogue-server` (HTTP) for browser/dev use |
+| `src-tauri` | Tauri 2 desktop shell: one command, `api(cmd, args)` |
+| `editor` | Svelte 5 + TypeScript UI |
+| `e2e` | Playwright tests that drive the real UI |
 | `mods` | Example mods |
-| `docs` | Architecture, modding guide, roadmap |
 
-## Build & test
+## Run it
 
 ```bash
-# Engine crates: Rust only, no system libs needed
-cargo test --workspace
-
-# Editor UI typecheck + bundle
-npm install && npm run build
-
 # Desktop app (needs Tauri system deps: https://tauri.app/start/prerequisites/)
-npm run tauri dev
+npm install && npm run tauri dev
+
+# …or in a browser, no system deps: backend + UI dev server
+cargo run -p rogue-studio --bin rogue-server      # API on 127.0.0.1:1430
+npm run dev                                       # UI on http://localhost:1420
+
+# Tests
+cargo test --workspace          # engine, scripting, graphs, assets, studio
+npm run build                   # svelte-check + bundle
+npm run e2e                     # Playwright (needs a built rogue-server + `npm run build`)
 ```
 
-## A mod in 10 lines
+## Project format
 
-```toml
-# mods/my-mod/mod.toml
-id = "my-mod"
-depends = ["base"]
-```
-```lua
--- mods/my-mod/main.lua
-rogue.rules.damage = function(attacker, target)          -- replace a core rule
-  return rogue.default_damage(attacker, target) * 2
-end
-rogue.on("died", function(ev) rogue.log("something died") end)   -- react to events
-```
+A game is a folder: `game.reproj`, `data/` (entities, tiles), `scripts/*.lua`, `graphs/*.graph.json`,
+`sprites/*.png|json`. Plain files — diff them, commit them, edit them by hand.
 
-More: [`docs/MODDING.md`](docs/MODDING.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+More: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/MODDING.md`](docs/MODDING.md)

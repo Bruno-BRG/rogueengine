@@ -34,9 +34,9 @@ fn floor() -> Sprite {
     for y in 0..16 {
         for x in 0..16 {
             let n = noise(x, y, 1);
-            let base = if n < 40 { "#1d212b" } else if n > 220 { "#2c3240" } else { "#252a36" };
+            let base = if n < 40 { "#2a3040" } else if n > 220 { "#3e4659" } else { "#343b4d" };
             let seam = x % 8 == 0 || y % 8 == 0;
-            s.set(0, x, y, hex(if seam { "#1a1d26" } else { base }));
+            s.set(0, x, y, hex(if seam { "#2a3040" } else { base }));
         }
     }
     s

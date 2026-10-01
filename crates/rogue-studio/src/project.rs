@@ -29,6 +29,16 @@ pub struct Project {
     pub meta: Meta,
 }
 
+/// Write via a temp file + rename so a crash or concurrent reader never sees a half-written file.
+pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    let tmp = path.with_extension(format!("{}.tmp", path.extension().and_then(|e| e.to_str()).unwrap_or("")));
+    fs::write(&tmp, bytes).map_err(|e| e.to_string())?;
+    fs::rename(&tmp, path).map_err(|e| {
+        let _ = fs::remove_file(&tmp);
+        e.to_string()
+    })
+}
+
 /// Asset names become file names, so they must be boring: no separators, no dots.
 pub fn valid_name(n: &str) -> Result<&str, String> {
     let ok = !n.is_empty() && n.len() <= 64 && n.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-');
@@ -57,7 +67,7 @@ impl Project {
             fs::create_dir_all(dir.join(sub)).map_err(|e| e.to_string())?;
         }
         let meta = Meta { name: name.trim().to_string(), engine_version: v1() };
-        fs::write(dir.join(PROJECT_FILE), serde_json::to_string_pretty(&meta).unwrap()).map_err(|e| e.to_string())?;
+        atomic_write(&dir.join(PROJECT_FILE), serde_json::to_string_pretty(&meta).unwrap().as_bytes())?;
         let p = Self { dir, meta };
         if template != "empty" {
             crate::template::dungeon(&p)?;
@@ -85,10 +95,10 @@ impl Project {
         fs::read_to_string(self.path(sub, name, ext)?).map_err(|e| format!("{name}: {e}"))
     }
     pub fn write_text(&self, sub: &str, name: &str, ext: &str, text: &str) -> Result<(), String> {
-        fs::write(self.path(sub, name, ext)?, text).map_err(|e| e.to_string())
+        atomic_write(&self.path(sub, name, ext)?, text.as_bytes())
     }
     pub fn write_bytes(&self, sub: &str, name: &str, ext: &str, bytes: &[u8]) -> Result<(), String> {
-        fs::write(self.path(sub, name, ext)?, bytes).map_err(|e| e.to_string())
+        atomic_write(&self.path(sub, name, ext)?, bytes)
     }
     pub fn read_bytes(&self, sub: &str, name: &str, ext: &str) -> Result<Vec<u8>, String> {
         fs::read(self.path(sub, name, ext)?).map_err(|e| format!("{name}: {e}"))
@@ -113,7 +123,7 @@ impl Project {
 
     pub fn save_objects(&self, entities: &Map<String, Value>, tiles: &Map<String, Value>) -> Result<(), String> {
         let w = |file: &str, key: &str, m: &Map<String, Value>| {
-            fs::write(self.dir.join("data").join(file), serde_json::to_string_pretty(&json!({ key: m })).unwrap()).map_err(|e| e.to_string())
+            atomic_write(&self.dir.join("data").join(file), serde_json::to_string_pretty(&json!({ key: m })).unwrap().as_bytes())
         };
         w("entities.json", "entities", entities)?;
         w("tiles.json", "tiles", tiles)

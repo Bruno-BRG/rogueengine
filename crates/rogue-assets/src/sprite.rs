@@ -109,16 +109,20 @@ pub struct SpriteEditor {
     pub frame: usize,
     undo: Vec<Sprite>,
     redo: Vec<Sprite>,
+    stroking: bool,
 }
 
 const MAX_UNDO: usize = 100;
 
 impl SpriteEditor {
     pub fn new(sprite: Sprite) -> Self {
-        Self { sprite, frame: 0, undo: vec![], redo: vec![] }
+        Self { sprite, frame: 0, undo: vec![], redo: vec![], stroking: false }
     }
 
     fn checkpoint(&mut self) {
+        if self.stroking {
+            return;
+        }
         self.undo.push(self.sprite.clone());
         if self.undo.len() > MAX_UNDO {
             self.undo.remove(0);
@@ -126,6 +130,7 @@ impl SpriteEditor {
         self.redo.clear();
     }
     pub fn undo(&mut self) -> bool {
+        self.stroking = false;
         match self.undo.pop() {
             Some(prev) => {
                 self.redo.push(std::mem::replace(&mut self.sprite, prev));
@@ -136,6 +141,7 @@ impl SpriteEditor {
         }
     }
     pub fn redo(&mut self) -> bool {
+        self.stroking = false;
         match self.redo.pop() {
             Some(next) => {
                 self.undo.push(std::mem::replace(&mut self.sprite, next));
@@ -246,6 +252,9 @@ pub enum SpriteOp {
     AddFrame { #[serde(default)] duplicate: bool },
     RemoveFrame,
     SelectFrame { index: usize },
+    /// Group the following ops into one undo step (a freehand drag), until `StrokeEnd`.
+    StrokeStart,
+    StrokeEnd,
     Undo,
     Redo,
 }
@@ -276,6 +285,11 @@ impl SpriteEditor {
                 self.remove_frame();
             }
             SpriteOp::SelectFrame { index } => self.frame = index.min(self.sprite.frames.len() - 1),
+            SpriteOp::StrokeStart => {
+                self.checkpoint();
+                self.stroking = true;
+            }
+            SpriteOp::StrokeEnd => self.stroking = false,
             SpriteOp::Undo => {
                 self.undo();
             }

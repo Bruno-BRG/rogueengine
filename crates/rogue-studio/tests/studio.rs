@@ -105,3 +105,30 @@ fn open_rejects_non_projects_and_reopens_created_ones() {
     assert_eq!(info["name"], "My Test Game");
     assert!(s.call("project_create", json!({"parent": dir.path(), "name": "My Test Game"})).is_err(), "must not overwrite");
 }
+
+#[test]
+fn script_syntax_check() {
+    let (mut s, _d) = studio();
+    assert_eq!(s.call("script_check", json!({"text": "local x = 1"})).unwrap()["ok"], true);
+    let bad = s.call("script_check", json!({"text": "local = ="})).unwrap();
+    assert_eq!(bad["ok"], false);
+    assert!(bad["error"].as_str().unwrap().contains(":1"), "{bad}");
+}
+
+#[test]
+fn writes_are_atomic_and_leave_no_temp_files() {
+    let (mut s, dir) = studio();
+    create(&mut s, &dir);
+    for i in 0..20 {
+        s.call("script_save", json!({"name": "a", "text": format!("-- {i}")})).unwrap();
+    }
+    s.call("objects_save", json!({"entities": {}, "tiles": {}})).unwrap();
+    let mut stray = vec![];
+    for sub in ["scripts", "data", "sprites", "graphs", "."] {
+        for e in std::fs::read_dir(dir.path().join("my-test-game").join(sub)).unwrap().flatten() {
+            if e.file_name().to_string_lossy().ends_with(".tmp") { stray.push(e.path()); }
+        }
+    }
+    assert!(stray.is_empty(), "{stray:?}");
+    assert_eq!(std::fs::read_to_string(dir.path().join("my-test-game/scripts/a.lua")).unwrap(), "-- 19");
+}

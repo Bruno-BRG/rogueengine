@@ -1,86 +1,1424 @@
 [
-  {"type":"event.died","kind":"event","title":"On Died","category":"Events",
-   "outputs":[{"name":"then","ty":"exec"},{"name":"entity","ty":"entity","expr":"ev.id"},{"name":"killer","ty":"entity","expr":"ev.killer"},{"name":"kind","ty":"string","expr":"ev.kind"},{"name":"x","ty":"number","expr":"ev.pos.x"},{"name":"y","ty":"number","expr":"ev.pos.y"}],
-   "template":"rogue.on(\"died\", function(ev)\n${then}\nend)"},
-  {"type":"event.attacked","kind":"event","title":"On Attacked","category":"Events",
-   "outputs":[{"name":"then","ty":"exec"},{"name":"attacker","ty":"entity","expr":"ev.attacker"},{"name":"target","ty":"entity","expr":"ev.target"},{"name":"damage","ty":"number","expr":"ev.damage"}],
-   "template":"rogue.on(\"attacked\", function(ev)\n${then}\nend)"},
-  {"type":"event.moved","kind":"event","title":"On Moved","category":"Events",
-   "outputs":[{"name":"then","ty":"exec"},{"name":"entity","ty":"entity","expr":"ev.id"},{"name":"x","ty":"number","expr":"ev.to.x"},{"name":"y","ty":"number","expr":"ev.to.y"}],
-   "template":"rogue.on(\"moved\", function(ev)\n${then}\nend)"},
-  {"type":"event.turn_started","kind":"event","title":"On Turn Started","category":"Events",
-   "outputs":[{"name":"then","ty":"exec"},{"name":"entity","ty":"entity","expr":"ev.id"}],
-   "template":"rogue.on(\"turn_started\", function(ev)\n${then}\nend)"},
-  {"type":"event.item_picked","kind":"event","title":"On Item Picked Up","category":"Events",
-   "outputs":[{"name":"then","ty":"exec"},{"name":"who","ty":"entity","expr":"ev.who"},{"name":"item","ty":"entity","expr":"ev.item"}],
-   "template":"rogue.on(\"item_picked\", function(ev)\n${then}\nend)"},
-
-  {"type":"flow.branch","kind":"flow","title":"Branch","category":"Flow",
-   "inputs":[{"name":"exec","ty":"exec"},{"name":"condition","ty":"bool","default":false}],
-   "outputs":[{"name":"true","ty":"exec"},{"name":"false","ty":"exec"}],
-   "template":"if ${condition} then\n${true}\nelse\n${false}\nend"},
-  {"type":"flow.sequence","kind":"flow","title":"Sequence","category":"Flow",
-   "inputs":[{"name":"exec","ty":"exec"}],
-   "outputs":[{"name":"a","ty":"exec"},{"name":"b","ty":"exec"}],
-   "template":"${a}\n${b}"},
-  {"type":"flow.if_exists","kind":"flow","title":"If Entity Exists","category":"Flow",
-   "inputs":[{"name":"exec","ty":"exec"},{"name":"entity","ty":"entity"}],
-   "outputs":[{"name":"then","ty":"exec"}],
-   "template":"if ${entity} ~= nil and rogue.exists(${entity}) then\n${then}\nend"},
-
-  {"type":"action.log","kind":"flow","title":"Log Message","category":"Actions",
-   "inputs":[{"name":"exec","ty":"exec"},{"name":"text","ty":"string","default":"Hello"}],
-   "outputs":[{"name":"then","ty":"exec"}],
-   "template":"rogue.log(${text})\n${then}"},
-  {"type":"action.damage","kind":"flow","title":"Deal Damage","category":"Actions",
-   "inputs":[{"name":"exec","ty":"exec"},{"name":"source","ty":"entity"},{"name":"target","ty":"entity"},{"name":"amount","ty":"number","default":1}],
-   "outputs":[{"name":"then","ty":"exec"}],
-   "template":"rogue.damage(${source}, ${target}, ${amount})\n${then}"},
-  {"type":"action.heal","kind":"flow","title":"Heal","category":"Actions",
-   "inputs":[{"name":"exec","ty":"exec"},{"name":"target","ty":"entity"},{"name":"amount","ty":"number","default":5}],
-   "outputs":[{"name":"then","ty":"exec"}],
-   "template":"rogue.heal(${target}, ${amount})\n${then}"},
-  {"type":"action.spawn","kind":"flow","title":"Spawn Entity","category":"Actions",
-   "inputs":[{"name":"exec","ty":"exec"},{"name":"def","ty":"string","default":"goblin"},{"name":"x","ty":"number","default":0},{"name":"y","ty":"number","default":0}],
-   "outputs":[{"name":"then","ty":"exec"}],
-   "template":"rogue.spawn(${def}, ${x}, ${y})\n${then}"},
-  {"type":"action.set_data","kind":"flow","title":"Set Data","category":"Actions",
-   "inputs":[{"name":"exec","ty":"exec"},{"name":"entity","ty":"entity"},{"name":"key","ty":"string","default":"key"},{"name":"value","ty":"any"}],
-   "outputs":[{"name":"then","ty":"exec"}],
-   "template":"rogue.set_data(${entity}, ${key}, ${value})\n${then}"},
-  {"type":"action.add_tag","kind":"flow","title":"Add Tag","category":"Actions",
-   "inputs":[{"name":"exec","ty":"exec"},{"name":"entity","ty":"entity"},{"name":"tag","ty":"string","default":"tag"}],
-   "outputs":[{"name":"then","ty":"exec"}],
-   "template":"rogue.add_tag(${entity}, ${tag})\n${then}"},
-
-  {"type":"data.number","kind":"data","title":"Number","category":"Values",
-   "inputs":[{"name":"value","ty":"number","default":0}],"outputs":[{"name":"out","ty":"number"}],"template":"${value}"},
-  {"type":"data.string","kind":"data","title":"Text","category":"Values",
-   "inputs":[{"name":"value","ty":"string","default":""}],"outputs":[{"name":"out","ty":"string"}],"template":"${value}"},
-  {"type":"data.bool","kind":"data","title":"Boolean","category":"Values",
-   "inputs":[{"name":"value","ty":"bool","default":true}],"outputs":[{"name":"out","ty":"bool"}],"template":"${value}"},
-  {"type":"math.add","kind":"data","title":"Add","category":"Math",
-   "inputs":[{"name":"a","ty":"number","default":0},{"name":"b","ty":"number","default":0}],"outputs":[{"name":"out","ty":"number"}],"template":"${a} + ${b}"},
-  {"type":"math.sub","kind":"data","title":"Subtract","category":"Math",
-   "inputs":[{"name":"a","ty":"number","default":0},{"name":"b","ty":"number","default":0}],"outputs":[{"name":"out","ty":"number"}],"template":"${a} - ${b}"},
-  {"type":"math.mul","kind":"data","title":"Multiply","category":"Math",
-   "inputs":[{"name":"a","ty":"number","default":1},{"name":"b","ty":"number","default":1}],"outputs":[{"name":"out","ty":"number"}],"template":"${a} * ${b}"},
-  {"type":"math.random","kind":"data","title":"Random Int","category":"Math",
-   "inputs":[{"name":"min","ty":"number","default":1},{"name":"max","ty":"number","default":6}],"outputs":[{"name":"out","ty":"number"}],"template":"rogue.random(${min}, ${max})"},
-  {"type":"logic.greater","kind":"data","title":"Greater Than","category":"Logic",
-   "inputs":[{"name":"a","ty":"number","default":0},{"name":"b","ty":"number","default":0}],"outputs":[{"name":"out","ty":"bool"}],"template":"${a} > ${b}"},
-  {"type":"logic.equal","kind":"data","title":"Equal","category":"Logic",
-   "inputs":[{"name":"a","ty":"any"},{"name":"b","ty":"any"}],"outputs":[{"name":"out","ty":"bool"}],"template":"${a} == ${b}"},
-  {"type":"logic.and","kind":"data","title":"And","category":"Logic",
-   "inputs":[{"name":"a","ty":"bool","default":true},{"name":"b","ty":"bool","default":true}],"outputs":[{"name":"out","ty":"bool"}],"template":"${a} and ${b}"},
-  {"type":"logic.not","kind":"data","title":"Not","category":"Logic",
-   "inputs":[{"name":"a","ty":"bool","default":false}],"outputs":[{"name":"out","ty":"bool"}],"template":"not ${a}"},
-  {"type":"logic.chance","kind":"data","title":"Chance","category":"Logic",
-   "inputs":[{"name":"p","ty":"number","default":0.5}],"outputs":[{"name":"out","ty":"bool"}],"template":"rogue.chance(${p})"},
-  {"type":"entity.stat","kind":"data","title":"Get Stat","category":"Entity",
-   "inputs":[{"name":"entity","ty":"entity"},{"name":"stat","ty":"string","default":"hp"}],"outputs":[{"name":"out","ty":"number"}],"template":"rogue.stat(${entity}, ${stat})"},
-  {"type":"entity.get_data","kind":"data","title":"Get Data","category":"Entity",
-   "inputs":[{"name":"entity","ty":"entity"},{"name":"key","ty":"string","default":"key"}],"outputs":[{"name":"out","ty":"any"}],"template":"rogue.get_data(${entity}, ${key})"},
-  {"type":"entity.has_tag","kind":"data","title":"Has Tag","category":"Entity",
-   "inputs":[{"name":"entity","ty":"entity"},{"name":"tag","ty":"string","default":"tag"}],"outputs":[{"name":"out","ty":"bool"}],"template":"rogue.has_tag(${entity}, ${tag})"}
+ {
+  "type": "event.died",
+  "kind": "event",
+  "title": "On Died",
+  "category": "Events",
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity",
+    "expr": "ev.id"
+   },
+   {
+    "name": "killer",
+    "ty": "entity",
+    "expr": "ev.killer"
+   },
+   {
+    "name": "kind",
+    "ty": "string",
+    "expr": "ev.kind"
+   },
+   {
+    "name": "x",
+    "ty": "number",
+    "expr": "ev.pos.x"
+   },
+   {
+    "name": "y",
+    "ty": "number",
+    "expr": "ev.pos.y"
+   }
+  ],
+  "template": "rogue.on(\"died\", function(ev)\n${then}\nend)"
+ },
+ {
+  "type": "event.attacked",
+  "kind": "event",
+  "title": "On Attacked",
+  "category": "Events",
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   },
+   {
+    "name": "attacker",
+    "ty": "entity",
+    "expr": "ev.attacker"
+   },
+   {
+    "name": "target",
+    "ty": "entity",
+    "expr": "ev.target"
+   },
+   {
+    "name": "damage",
+    "ty": "number",
+    "expr": "ev.damage"
+   }
+  ],
+  "template": "rogue.on(\"attacked\", function(ev)\n${then}\nend)"
+ },
+ {
+  "type": "event.moved",
+  "kind": "event",
+  "title": "On Moved",
+  "category": "Events",
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity",
+    "expr": "ev.id"
+   },
+   {
+    "name": "x",
+    "ty": "number",
+    "expr": "ev.to.x"
+   },
+   {
+    "name": "y",
+    "ty": "number",
+    "expr": "ev.to.y"
+   }
+  ],
+  "template": "rogue.on(\"moved\", function(ev)\n${then}\nend)"
+ },
+ {
+  "type": "event.turn_started",
+  "kind": "event",
+  "title": "On Turn Started",
+  "category": "Events",
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity",
+    "expr": "ev.id"
+   }
+  ],
+  "template": "rogue.on(\"turn_started\", function(ev)\n${then}\nend)"
+ },
+ {
+  "type": "event.item_picked",
+  "kind": "event",
+  "title": "On Item Picked Up",
+  "category": "Events",
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   },
+   {
+    "name": "who",
+    "ty": "entity",
+    "expr": "ev.who"
+   },
+   {
+    "name": "item",
+    "ty": "entity",
+    "expr": "ev.item"
+   }
+  ],
+  "template": "rogue.on(\"item_picked\", function(ev)\n${then}\nend)"
+ },
+ {
+  "type": "flow.branch",
+  "kind": "flow",
+  "title": "Branch",
+  "category": "Flow",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "condition",
+    "ty": "bool",
+    "default": false
+   }
+  ],
+  "outputs": [
+   {
+    "name": "true",
+    "ty": "exec"
+   },
+   {
+    "name": "false",
+    "ty": "exec"
+   }
+  ],
+  "template": "if ${condition} then\n${true}\nelse\n${false}\nend"
+ },
+ {
+  "type": "flow.sequence",
+  "kind": "flow",
+  "title": "Sequence",
+  "category": "Flow",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "a",
+    "ty": "exec"
+   },
+   {
+    "name": "b",
+    "ty": "exec"
+   }
+  ],
+  "template": "${a}\n${b}"
+ },
+ {
+  "type": "flow.if_exists",
+  "kind": "flow",
+  "title": "If Entity Exists",
+  "category": "Flow",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "if ${entity} ~= nil and rogue.exists(${entity}) then\n${then}\nend"
+ },
+ {
+  "type": "action.log",
+  "kind": "flow",
+  "title": "Log Message",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "text",
+    "ty": "string",
+    "default": "Hello"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.log(${text})\n${then}"
+ },
+ {
+  "type": "action.damage",
+  "kind": "flow",
+  "title": "Deal Damage",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "source",
+    "ty": "entity"
+   },
+   {
+    "name": "target",
+    "ty": "entity"
+   },
+   {
+    "name": "amount",
+    "ty": "number",
+    "default": 1
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.damage(${source}, ${target}, ${amount})\n${then}"
+ },
+ {
+  "type": "action.heal",
+  "kind": "flow",
+  "title": "Heal",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "target",
+    "ty": "entity"
+   },
+   {
+    "name": "amount",
+    "ty": "number",
+    "default": 5
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.heal(${target}, ${amount})\n${then}"
+ },
+ {
+  "type": "action.spawn",
+  "kind": "flow",
+  "title": "Spawn Entity",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "def",
+    "ty": "string",
+    "default": "goblin"
+   },
+   {
+    "name": "x",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "y",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.spawn(${def}, ${x}, ${y})\n${then}"
+ },
+ {
+  "type": "action.set_data",
+  "kind": "flow",
+  "title": "Set Data",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "key",
+    "ty": "string",
+    "default": "key"
+   },
+   {
+    "name": "value",
+    "ty": "any"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.set_data(${entity}, ${key}, ${value})\n${then}"
+ },
+ {
+  "type": "action.add_tag",
+  "kind": "flow",
+  "title": "Add Tag",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "tag",
+    "ty": "string",
+    "default": "tag"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.add_tag(${entity}, ${tag})\n${then}"
+ },
+ {
+  "type": "data.number",
+  "kind": "data",
+  "title": "Number",
+  "category": "Values",
+  "inputs": [
+   {
+    "name": "value",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "${value}"
+ },
+ {
+  "type": "data.string",
+  "kind": "data",
+  "title": "Text",
+  "category": "Values",
+  "inputs": [
+   {
+    "name": "value",
+    "ty": "string",
+    "default": ""
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "string"
+   }
+  ],
+  "template": "${value}"
+ },
+ {
+  "type": "data.bool",
+  "kind": "data",
+  "title": "Boolean",
+  "category": "Values",
+  "inputs": [
+   {
+    "name": "value",
+    "ty": "bool",
+    "default": true
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "${value}"
+ },
+ {
+  "type": "math.add",
+  "kind": "data",
+  "title": "Add",
+  "category": "Math",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "b",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "${a} + ${b}"
+ },
+ {
+  "type": "math.sub",
+  "kind": "data",
+  "title": "Subtract",
+  "category": "Math",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "b",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "${a} - ${b}"
+ },
+ {
+  "type": "math.mul",
+  "kind": "data",
+  "title": "Multiply",
+  "category": "Math",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "number",
+    "default": 1
+   },
+   {
+    "name": "b",
+    "ty": "number",
+    "default": 1
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "${a} * ${b}"
+ },
+ {
+  "type": "math.random",
+  "kind": "data",
+  "title": "Random Int",
+  "category": "Math",
+  "inputs": [
+   {
+    "name": "min",
+    "ty": "number",
+    "default": 1
+   },
+   {
+    "name": "max",
+    "ty": "number",
+    "default": 6
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "rogue.random(${min}, ${max})"
+ },
+ {
+  "type": "logic.greater",
+  "kind": "data",
+  "title": "Greater Than",
+  "category": "Logic",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "b",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "${a} > ${b}"
+ },
+ {
+  "type": "logic.equal",
+  "kind": "data",
+  "title": "Equal",
+  "category": "Logic",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "any"
+   },
+   {
+    "name": "b",
+    "ty": "any"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "${a} == ${b}"
+ },
+ {
+  "type": "logic.and",
+  "kind": "data",
+  "title": "And",
+  "category": "Logic",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "bool",
+    "default": true
+   },
+   {
+    "name": "b",
+    "ty": "bool",
+    "default": true
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "${a} and ${b}"
+ },
+ {
+  "type": "logic.not",
+  "kind": "data",
+  "title": "Not",
+  "category": "Logic",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "bool",
+    "default": false
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "not ${a}"
+ },
+ {
+  "type": "logic.chance",
+  "kind": "data",
+  "title": "Chance",
+  "category": "Logic",
+  "inputs": [
+   {
+    "name": "p",
+    "ty": "number",
+    "default": 0.5
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "rogue.chance(${p})"
+ },
+ {
+  "type": "entity.stat",
+  "kind": "data",
+  "title": "Get Stat",
+  "category": "Entity",
+  "inputs": [
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "stat",
+    "ty": "string",
+    "default": "hp"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "rogue.stat(${entity}, ${stat})"
+ },
+ {
+  "type": "entity.get_data",
+  "kind": "data",
+  "title": "Get Data",
+  "category": "Entity",
+  "inputs": [
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "key",
+    "ty": "string",
+    "default": "key"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "any"
+   }
+  ],
+  "template": "rogue.get_data(${entity}, ${key})"
+ },
+ {
+  "type": "entity.has_tag",
+  "kind": "data",
+  "title": "Has Tag",
+  "category": "Entity",
+  "inputs": [
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "tag",
+    "ty": "string",
+    "default": "tag"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "rogue.has_tag(${entity}, ${tag})"
+ },
+ {
+  "type": "event.spawned",
+  "kind": "event",
+  "title": "On Spawned",
+  "category": "Events",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity",
+    "expr": "ev.id"
+   }
+  ],
+  "template": "rogue.on(\"spawned\", function(ev)\n${then}\nend)"
+ },
+ {
+  "type": "event.blocked",
+  "kind": "event",
+  "title": "On Blocked",
+  "category": "Events",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity",
+    "expr": "ev.id"
+   },
+   {
+    "name": "blocker",
+    "ty": "entity",
+    "expr": "ev.by"
+   }
+  ],
+  "template": "rogue.on(\"blocked\", function(ev)\n${then}\nend)"
+ },
+ {
+  "type": "event.equipped",
+  "kind": "event",
+  "title": "On Equipped",
+  "category": "Events",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   },
+   {
+    "name": "who",
+    "ty": "entity",
+    "expr": "ev.who"
+   },
+   {
+    "name": "item",
+    "ty": "entity",
+    "expr": "ev.item"
+   }
+  ],
+  "template": "rogue.on(\"equipped\", function(ev)\n${then}\nend)"
+ },
+ {
+  "type": "flow.for_radius",
+  "kind": "flow",
+  "title": "For Each In Radius",
+  "category": "Flow",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "x",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "y",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "radius",
+    "ty": "number",
+    "default": 3
+   }
+  ],
+  "outputs": [
+   {
+    "name": "body",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity",
+    "expr": "__loop_entity"
+   },
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "for _, __loop_entity in ipairs(rogue.in_radius(${x}, ${y}, ${radius})) do\n${body}\nend\n${then}"
+ },
+ {
+  "type": "flow.if_tag",
+  "kind": "flow",
+  "title": "If Has Tag",
+  "category": "Flow",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "tag",
+    "ty": "string",
+    "default": "monster"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "true",
+    "ty": "exec"
+   },
+   {
+    "name": "false",
+    "ty": "exec"
+   }
+  ],
+  "template": "if rogue.has_tag(${entity}, ${tag}) then\n${true}\nelse\n${false}\nend"
+ },
+ {
+  "type": "action.teleport",
+  "kind": "flow",
+  "title": "Teleport",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "x",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "y",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.teleport(${entity}, ${x}, ${y})\n${then}"
+ },
+ {
+  "type": "action.move",
+  "kind": "flow",
+  "title": "Move",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "dx",
+    "ty": "number",
+    "default": 1
+   },
+   {
+    "name": "dy",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.move(${entity}, ${dx}, ${dy})\n${then}"
+ },
+ {
+  "type": "action.knockback",
+  "kind": "flow",
+  "title": "Knock Back",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "dx",
+    "ty": "number",
+    "default": 1
+   },
+   {
+    "name": "dy",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "distance",
+    "ty": "number",
+    "default": 2
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.knockback(${entity}, ${dx}, ${dy}, ${distance})\n${then}"
+ },
+ {
+  "type": "action.despawn",
+  "kind": "flow",
+  "title": "Remove Entity",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.despawn(${entity})\n${then}"
+ },
+ {
+  "type": "action.remove_tag",
+  "kind": "flow",
+  "title": "Remove Tag",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "tag",
+    "ty": "string",
+    "default": "tag"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.remove_tag(${entity}, ${tag})\n${then}"
+ },
+ {
+  "type": "action.set_stat",
+  "kind": "flow",
+  "title": "Set Stat",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "entity",
+    "ty": "entity"
+   },
+   {
+    "name": "stat",
+    "ty": "string",
+    "default": "attack"
+   },
+   {
+    "name": "value",
+    "ty": "number",
+    "default": 1
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.set_stat(${entity}, ${stat}, ${value})\n${then}"
+ },
+ {
+  "type": "action.set_tile",
+  "kind": "flow",
+  "title": "Set Tile",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "x",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "y",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "tile",
+    "ty": "string",
+    "default": "floor"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.set_tile(${x}, ${y}, ${tile})\n${then}"
+ },
+ {
+  "type": "action.world_set",
+  "kind": "flow",
+  "title": "Set World Variable",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "key",
+    "ty": "string",
+    "default": "flag"
+   },
+   {
+    "name": "value",
+    "ty": "any"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.world_set(${key}, ${value})\n${then}"
+ },
+ {
+  "type": "action.equip",
+  "kind": "flow",
+  "title": "Equip Item",
+  "category": "Actions",
+  "inputs": [
+   {
+    "name": "exec",
+    "ty": "exec"
+   },
+   {
+    "name": "who",
+    "ty": "entity"
+   },
+   {
+    "name": "item",
+    "ty": "entity"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "then",
+    "ty": "exec"
+   }
+  ],
+  "template": "rogue.equip(${who}, ${item})\n${then}"
+ },
+ {
+  "type": "data.player",
+  "kind": "data",
+  "title": "Player",
+  "category": "Entity",
+  "inputs": [],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "entity"
+   }
+  ],
+  "template": "rogue.find_tagged(\"player\")[1]"
+ },
+ {
+  "type": "entity.pos_x",
+  "kind": "data",
+  "title": "Position X",
+  "category": "Entity",
+  "inputs": [
+   {
+    "name": "entity",
+    "ty": "entity"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "rogue.pos(${entity}).x"
+ },
+ {
+  "type": "entity.pos_y",
+  "kind": "data",
+  "title": "Position Y",
+  "category": "Entity",
+  "inputs": [
+   {
+    "name": "entity",
+    "ty": "entity"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "rogue.pos(${entity}).y"
+ },
+ {
+  "type": "entity.exists",
+  "kind": "data",
+  "title": "Exists",
+  "category": "Entity",
+  "inputs": [
+   {
+    "name": "entity",
+    "ty": "entity"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "(${entity} ~= nil and rogue.exists(${entity}))"
+ },
+ {
+  "type": "world.get",
+  "kind": "data",
+  "title": "Get World Variable",
+  "category": "Entity",
+  "inputs": [
+   {
+    "name": "key",
+    "ty": "string",
+    "default": "depth"
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "any"
+   }
+  ],
+  "template": "rogue.world_get(${key})"
+ },
+ {
+  "type": "math.div",
+  "kind": "data",
+  "title": "Divide",
+  "category": "Math",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "number",
+    "default": 1
+   },
+   {
+    "name": "b",
+    "ty": "number",
+    "default": 1
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "${a} / ${b}"
+ },
+ {
+  "type": "math.min",
+  "kind": "data",
+  "title": "Min",
+  "category": "Math",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "b",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "math.min(${a}, ${b})"
+ },
+ {
+  "type": "math.max",
+  "kind": "data",
+  "title": "Max",
+  "category": "Math",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "b",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "math.max(${a}, ${b})"
+ },
+ {
+  "type": "math.clamp",
+  "kind": "data",
+  "title": "Clamp",
+  "category": "Math",
+  "inputs": [
+   {
+    "name": "value",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "min",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "max",
+    "ty": "number",
+    "default": 10
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "number"
+   }
+  ],
+  "template": "math.max(${min}, math.min(${max}, ${value}))"
+ },
+ {
+  "type": "logic.less",
+  "kind": "data",
+  "title": "Less Than",
+  "category": "Logic",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "number",
+    "default": 0
+   },
+   {
+    "name": "b",
+    "ty": "number",
+    "default": 0
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "${a} < ${b}"
+ },
+ {
+  "type": "logic.or",
+  "kind": "data",
+  "title": "Or",
+  "category": "Logic",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "bool",
+    "default": false
+   },
+   {
+    "name": "b",
+    "ty": "bool",
+    "default": false
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "bool"
+   }
+  ],
+  "template": "${a} or ${b}"
+ },
+ {
+  "type": "text.join",
+  "kind": "data",
+  "title": "Join Text",
+  "category": "Values",
+  "inputs": [
+   {
+    "name": "a",
+    "ty": "string",
+    "default": ""
+   },
+   {
+    "name": "b",
+    "ty": "string",
+    "default": ""
+   }
+  ],
+  "outputs": [
+   {
+    "name": "out",
+    "ty": "string"
+   }
+  ],
+  "template": "(tostring(${a}) .. tostring(${b}))"
+ }
 ]

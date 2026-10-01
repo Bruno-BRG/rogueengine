@@ -5,16 +5,31 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config editor/vite.config.ts",
-    "build": "tsc --noEmit -p editor && vite build --config editor/vite.config.ts",
-    "typecheck": "tsc --noEmit -p editor",
-    "tauri": "tauri"
+    "build": "svelte-check --tsconfig editor/tsconfig.json && vite build --config editor/vite.config.ts",
+    "typecheck": "svelte-check --tsconfig editor/tsconfig.json",
+    "tauri": "tauri",
+    "preview": "vite preview --config editor/vite.config.ts",
+    "e2e": "node --test e2e/e2e.test.mjs"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2"
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/legacy-modes": "^6.5.4",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.13",
+    "@lezer/highlight": "^1.2.5",
+    "@tauri-apps/api": "^2",
+    "codemirror": "^6.0.2"
   },
   "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tauri-apps/cli": "^2",
+    "@tsconfig/svelte": "^5.0.8",
+    "playwright-core": "^1.63.0",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.6",
     "typescript": "^5",
-    "vite": "^6"
+    "vite": "^8.3.2"
   }
 }

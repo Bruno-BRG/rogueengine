@@ -138,6 +138,26 @@ impl Engine {
         Ok(self.lua.from_value(v)?)
     }
 
+    /// Console semantics: evaluate `code` as an expression and return its value;
+    /// if it is not an expression, run it as statements and return null.
+    /// Values that are not JSON-representable (functions, userdata) become their `tostring`.
+    pub fn eval_console(&self, code: &str) -> Result<serde_json::Value, ScriptError> {
+        let as_expr = format!("return {code}");
+        match self.lua.load(&as_expr).set_name("console").into_function() {
+            Ok(f) => {
+                let v: LuaValue = f.call(())?;
+                Ok(match self.lua.from_value::<serde_json::Value>(v.clone()) {
+                    Ok(j) => j,
+                    Err(_) => serde_json::Value::String(self.lua.globals().get::<mlua::Function>("tostring")?.call::<String>(v)?),
+                })
+            }
+            Err(_) => {
+                self.lua.load(code).set_name("console").exec()?;
+                Ok(serde_json::Value::Null)
+            }
+        }
+    }
+
     pub fn eval<T: mlua::FromLua>(&self, code: &str) -> Result<T, ScriptError> {
         Ok(self.lua.load(code).eval()?)
     }
@@ -210,6 +230,11 @@ impl Engine {
         self.dispatch_events()?;
         self.advance()
     }
+}
+
+/// Compile-only Lua syntax check (never runs the code). Error text starts with `line:`.
+pub fn check_syntax(code: &str) -> Result<(), String> {
+    Lua::new().load(code).set_name("script").into_function().map(|_| ()).map_err(|e| e.to_string())
 }
 
 /// The base mod's JSON data (tiles + entities), for editors that show built-in objects.

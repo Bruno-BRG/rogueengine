@@ -23,7 +23,7 @@ pub fn dungeon(p: &Project) -> Result<(), String> {
         "nodes": [
             { "id": 1, "type": "event.died", "props": {}, "x": 40, "y": 60 },
             { "id": 2, "type": "flow.branch", "props": {}, "x": 340, "y": 60 },
-            { "id": 3, "type": "logic.chance", "props": { "p": 0.35 }, "x": 90, "y": 220 },
+            { "id": 3, "type": "logic.chance", "props": { "p": 0.35 }, "x": 340, "y": 230 },
             { "id": 4, "type": "action.spawn", "props": { "def": "potion_heal" }, "x": 640, "y": 40 },
             { "id": 5, "type": "action.log", "props": { "text": "Something glints in the remains..." }, "x": 920, "y": 40 }
         ],

@@ -1,11 +1,12 @@
 # Architecture
 
 ```
- editor (TS)  ──invoke──▶  src-tauri  ──▶  rogue-host ──thread──▶ rogue-script ──▶ rogue-core
- game / graph / sprite     thin commands    JSON protocol          Lua + mods        pure rules
-                                  └────────▶ rogue-assets (sprite editor, animation)
-                                  rogue-graph (graph → Lua) is used by rogue-host
+ editor (Svelte)  ── call(cmd,args) ──▶  Tauri `api`  ─┐                    ┌▶ rogue-host ─thread▶ rogue-script ▶ rogue-core
+  Play / Graph / Sprites /    └─ HTTP POST /api/cmd ─▶ rogue-server ─┴▶ rogue-studio ┤           (Lua + mods)      (pure rules)
+  Objects / Scripts                                                                  ├▶ rogue-assets (sprites, animation)
+                                                                                     └▶ rogue-graph  (graph → Lua)
 ```
+`rogue-studio` owns the project on disk and builds it into a mod for `rogue-host` at every new game.
 
 ## Why this shape
 

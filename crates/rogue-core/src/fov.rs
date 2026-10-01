@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use crate::grid::{Pos, TileMap};
 
 /// Recursive shadowcasting. Returns every visible tile within `radius` (including the origin).
+#[allow(clippy::needless_range_loop)] // `oct` indexes four parallel rows of MULT
 pub fn compute_fov(map: &TileMap, origin: Pos, radius: i32) -> HashSet<Pos> {
     let mut seen = HashSet::new();
     seen.insert(origin);
@@ -13,7 +14,8 @@ pub fn compute_fov(map: &TileMap, origin: Pos, radius: i32) -> HashSet<Pos> {
         [1, 0, 0, 1, -1, 0, 0, -1],
     ];
     for oct in 0..8 {
-        cast(map, origin, radius, 1, 1.0, 0.0, [MULT[0][oct], MULT[1][oct], MULT[2][oct], MULT[3][oct]], &mut seen);
+        let m = [MULT[0][oct], MULT[1][oct], MULT[2][oct], MULT[3][oct]];
+        cast(map, origin, radius, 1, 1.0, 0.0, m, &mut seen);
     }
     seen
 }

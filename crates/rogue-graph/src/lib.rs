@@ -206,7 +206,31 @@ pub fn compile(graph: &Graph, lib: &Library) -> Result<String, GraphError> {
         out.push_str(&c.node_code(n, &mut Vec::new())?);
         out.push('\n');
     }
-    Ok(out)
+    Ok(pretty(&out))
+}
+
+/// Cosmetic: drop blank lines and indent by block structure so the generated Lua is readable.
+fn pretty(code: &str) -> String {
+    let mut out = String::new();
+    let mut depth: i32 = 0;
+    for raw in code.lines() {
+        let line = raw.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let closes = line.starts_with("end") || line.starts_with("else") || line.starts_with("until");
+        if closes {
+            depth = (depth - 1).max(0);
+        }
+        out.push_str(&"  ".repeat(depth as usize));
+        out.push_str(line);
+        out.push('\n');
+        let opens = line.ends_with("then") || line.ends_with(" do") || line == "else" || line.starts_with("else") && line.ends_with("then") || (line.contains("function") && line.ends_with(')') && line.rfind("function").is_some_and(|i| line[i..].matches('(').count() == 1 && line[i..].matches(')').count() == 1));
+        if opens {
+            depth += 1;
+        }
+    }
+    out
 }
 
 impl Compiler<'_> {

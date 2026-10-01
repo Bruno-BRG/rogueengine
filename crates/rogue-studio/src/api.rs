@@ -177,6 +177,10 @@ impl Studio {
             }
             "script_load" => self.project()?.read_text("scripts", str_arg(&args, "name")?, ".lua").map(|t| json!({ "text": t })),
             "script_save" => self.project()?.write_text("scripts", str_arg(&args, "name")?, ".lua", str_arg(&args, "text")?).map(|_| json!(null)),
+            "script_check" => Ok(match rogue_script::check_syntax(str_arg(&args, "text")?) {
+                Ok(()) => json!({ "ok": true }),
+                Err(e) => json!({ "ok": false, "error": e }),
+            }),
             "script_delete" => self.project()?.delete("scripts", str_arg(&args, "name")?, &[".lua"]).map(|_| json!(null)),
 
             // ---- objects (entities & tiles)
