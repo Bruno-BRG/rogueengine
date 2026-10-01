@@ -60,6 +60,8 @@ pub struct Entity {
     pub pos: Pos,
     pub glyph: Option<char>,
     pub sprite: Option<String>,
+    /// CSS colour for glyph rendering when there is no sprite.
+    pub color: Option<String>,
     #[serde(default)]
     pub blocks: bool,
     pub stats: Option<Stats>,

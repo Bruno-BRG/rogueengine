@@ -1,0 +1,21 @@
+[package]
+name = "rogue-studio"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+rogue-core = { path = "../rogue-core" }
+rogue-script = { path = "../rogue-script" }
+rogue-graph = { path = "../rogue-graph" }
+rogue-assets = { path = "../rogue-assets" }
+rogue-host = { path = "../rogue-host" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+base64 = "0.22"
+tiny_http = "0.12"
+
+[dev-dependencies]
+png.workspace = true
+tempfile = "3"

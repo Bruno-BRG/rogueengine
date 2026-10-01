@@ -39,6 +39,8 @@ pub struct TileDef {
     #[serde(default)]
     pub sprite: Option<String>,
     #[serde(default)]
+    pub color: Option<String>,
+    #[serde(default)]
     pub tags: Vec<String>,
 }
 fn yes() -> bool {
@@ -72,6 +74,7 @@ impl TileMap {
             transparent: false,
             glyph: Some(' '),
             sprite: None,
+            color: None,
             tags: vec![],
         });
         m

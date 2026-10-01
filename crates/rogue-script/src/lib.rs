@@ -132,6 +132,12 @@ impl Engine {
         Ok(())
     }
 
+    /// Evaluate Lua and convert the result to JSON (used for host-side queries like the HUD).
+    pub fn eval_json(&self, code: &str) -> Result<serde_json::Value, ScriptError> {
+        let v: LuaValue = self.lua.load(code).eval()?;
+        Ok(self.lua.from_value(v)?)
+    }
+
     pub fn eval<T: mlua::FromLua>(&self, code: &str) -> Result<T, ScriptError> {
         Ok(self.lua.load(code).eval()?)
     }
@@ -204,6 +210,11 @@ impl Engine {
         self.dispatch_events()?;
         self.advance()
     }
+}
+
+/// The base mod's JSON data (tiles + entities), for editors that show built-in objects.
+pub fn base_data() -> &'static str {
+    include_str!("../lua/base/data.json")
 }
 
 fn base_mod() -> ModSource {

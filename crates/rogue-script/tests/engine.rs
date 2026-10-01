@@ -28,7 +28,8 @@ fn base_rules_player_fights_goblin_and_picks_up_items() {
     e.exec("rogue.damage(nil, P, 10)").unwrap();
     let before: i64 = e.eval("rogue.get(P).stats.hp").unwrap();
     assert!(e.eval::<bool>("rogue.use_item(P, POTION)").unwrap());
-    assert_eq!(e.eval::<i64>("rogue.get(P).stats.hp").unwrap(), (before + 10).min(30));
+    let max: i64 = e.eval("rogue.get(P).stats.max_hp").unwrap();
+    assert_eq!(e.eval::<i64>("rogue.get(P).stats.hp").unwrap(), (before + 12).min(max));
     assert!(!e.eval::<bool>("rogue.exists(POTION)").unwrap(), "potion consumed");
 }
 
@@ -97,4 +98,46 @@ fn player_death_ends_the_game_instead_of_looping() {
     e.exec("rogue.damage(nil, P, 9999)").unwrap();
     assert_eq!(e.advance().unwrap(), rogue_script::Turn::Idle);
     assert_eq!(e.act("wait", json!({})).unwrap(), rogue_script::Turn::Idle);
+}
+
+#[test]
+fn new_game_descend_and_xp() {
+    let e = Engine::new(50, 30, 11).unwrap();
+    e.exec("P = rogue.rules.new_game()").unwrap();
+    e.advance().unwrap();
+    assert!(e.eval::<i64>("#rogue.find_tagged('monster')").unwrap() > 0);
+    // standing off the stairs: descending is refused and takes no time
+    e.act("descend", json!({})).unwrap();
+    assert_eq!(e.eval::<i64>("rogue.world_get('depth')").unwrap(), 1);
+    // teleport onto the stairs and descend
+    e.exec(r#"
+        local w, h = rogue.map_size()
+        for y=0,h-1 do for x=0,w-1 do
+          if rogue.tile(x,y).id == "stairs_down" then rogue.teleport(P, x, y) end
+        end end
+    "#).unwrap();
+    e.act("descend", json!({})).unwrap();
+    assert_eq!(e.eval::<i64>("rogue.world_get('depth')").unwrap(), 2);
+    assert!(e.eval::<bool>("rogue.exists(P)").unwrap());
+    // XP and level-up by killing something
+    e.exec(r#"
+        local p = rogue.pos(P)
+        K = rogue.spawn("orc", p.x, p.y)  -- same tile is fine for the test
+        rogue.damage(P, K, 999)
+    "#).unwrap();
+    e.dispatch_events().unwrap();
+    assert!(e.eval::<i64>("rogue.get_data(P,'level')").unwrap() >= 2, "orc xp (25) should level up");
+    let hud = e.eval_json("rogue.rules.hud()").unwrap();
+    assert_eq!(hud[0][0], "Depth");
+}
+
+#[test]
+fn levels_are_deterministic_per_seed() {
+    let sig = |seed| {
+        let e = Engine::new(50, 30, seed).unwrap();
+        e.exec("P = rogue.rules.new_game()").unwrap();
+        e.eval::<String>(r#"local t = {} for _, id in ipairs(rogue.find_tagged('monster')) do t[#t+1] = rogue.get(id).kind .. rogue.pos(id).x .. "," .. rogue.pos(id).y end table.sort(t) return table.concat(t, ";")"#).unwrap()
+    };
+    assert_eq!(sig(3), sig(3));
+    assert_ne!(sig(3), sig(4));
 }

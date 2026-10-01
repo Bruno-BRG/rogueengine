@@ -7,7 +7,7 @@
 //!  - for exec output pins, the code of the chain connected to that pin.
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 pub const BUILTIN_NODES: &str = include_str!("builtin_nodes.json");
 

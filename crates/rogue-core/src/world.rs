@@ -28,6 +28,9 @@ pub struct World {
     #[serde(skip)]
     events: Vec<Event>,
     pub log: Vec<String>,
+    /// Free-form world state for scripts (depth, quest flags, ...).
+    #[serde(default)]
+    pub vars: serde_json::Map<String, serde_json::Value>,
 }
 
 impl World {
@@ -40,6 +43,7 @@ impl World {
             free: Vec::new(),
             events: Vec::new(),
             log: Vec::new(),
+            vars: Default::default(),
         }
     }
 
@@ -150,13 +154,33 @@ impl World {
         let Some(stats) = self.get_mut(target).and_then(|e| e.stats.as_mut()) else { return };
         stats.hp -= amount;
         let dead = stats.hp <= 0;
+        let name_of = |w: &World, id: EntityId| w.get(id).map(|e| e.name.clone()).unwrap_or_default();
         if let Some(s) = source {
-            self.emit(Event::Attacked { attacker: s, target, damage: amount });
+            let (attacker_name, target_name) = (name_of(self, s), name_of(self, target));
+            self.emit(Event::Attacked { attacker: s, target, damage: amount, attacker_name, target_name });
         }
         if dead {
-            self.emit(Event::Died { id: target, killer: source });
+            let e = self.get(target).unwrap();
+            let ev = Event::Died { id: target, killer: source, kind: e.kind.clone(), name: e.name.clone(), pos: e.pos };
+            self.emit(ev);
             self.despawn(target);
         }
+    }
+
+    /// Remove every entity except `keep` and anything carried by a kept entity
+    /// (used to build a new floor while the player keeps their inventory).
+    pub fn clear_level(&mut self, keep: &[EntityId]) {
+        let doomed: Vec<EntityId> = self
+            .ids()
+            .filter(|id| {
+                let carried_by_kept = self.get(*id).and_then(|e| e.carried_by).is_some_and(|c| keep.contains(&c));
+                !keep.contains(id) && !carried_by_kept
+            })
+            .collect();
+        for id in doomed {
+            self.despawn(id);
+        }
+        self.map.fill("wall");
     }
 
     pub fn heal(&mut self, target: EntityId, amount: i32) {
@@ -175,7 +199,7 @@ pub(crate) mod tests {
     pub(crate) fn test_world() -> World {
         let mut w = World::new(20, 20, 7);
         for (id, walk) in [("floor", true), ("wall", false)] {
-            w.map.register(TileDef { id: id.into(), name: id.into(), walkable: walk, transparent: walk, glyph: None, sprite: None, tags: vec![] });
+            w.map.register(TileDef { id: id.into(), name: id.into(), walkable: walk, transparent: walk, glyph: None, sprite: None, color: None, tags: vec![] });
         }
         w.map.fill("floor");
         w
@@ -281,5 +305,24 @@ mod save_tests {
         back.map.rebuild_index();
         assert_eq!(back.ids().count(), 1);
         assert!(back.map.tile_id("floor").is_some());
+    }
+}
+
+#[cfg(test)]
+mod level_tests {
+    use super::tests::test_world;
+    use crate::{Entity, Pos};
+
+    #[test]
+    fn clear_level_keeps_player_and_inventory() {
+        let mut w = test_world();
+        let mut hero = Entity { name: "h".into(), ..Default::default() };
+        hero.inventory = Some(crate::entity::Inventory { capacity: 5, ..Default::default() });
+        let h = w.spawn(hero);
+        let sword = w.spawn(Entity { pos: Pos::new(0, 0), item: Some(Default::default()), ..Default::default() });
+        w.pickup(h, sword).unwrap();
+        let rat = w.spawn(Entity::default());
+        w.clear_level(&[h]);
+        assert!(w.get(h).is_some() && w.get(sword).is_some() && w.get(rat).is_none());
     }
 }

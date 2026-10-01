@@ -3,7 +3,7 @@
 use rogue_core::grid::{Pos, TileDef};
 use rogue_core::World;
 use rogue_graph::{Graph, Library};
-use rogue_script::{Engine, Turn};
+use rogue_script::{Engine, ModSource, Turn};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashSet;
@@ -57,6 +57,7 @@ pub struct EntityView {
     pub kind: String,
     pub glyph: Option<char>,
     pub sprite: Option<String>,
+    pub color: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -64,6 +65,9 @@ pub struct ItemView {
     pub id: u64,
     pub name: String,
     pub glyph: Option<char>,
+    pub sprite: Option<String>,
+    pub color: Option<String>,
+    pub slot: Option<String>,
     pub equipped: bool,
     pub usable: bool,
 }
@@ -83,29 +87,52 @@ pub struct Snapshot {
     pub max_hp: i32,
     pub inventory: Vec<ItemView>,
     pub log: Vec<String>,
+    /// Status rows from `rogue.rules.hud()`: [label, value].
+    pub hud: Vec<[String; 2]>,
     pub game_over: bool,
+}
+
+enum Msg {
+    Req(Request),
+    /// The user's game, loaded as a mod after `base` at every new game.
+    SetProject(Option<Box<ModSource>>),
 }
 
 #[derive(Clone)]
 pub struct Host {
-    tx: mpsc::Sender<(Request, mpsc::Sender<Response>)>,
+    tx: mpsc::Sender<(Msg, mpsc::Sender<Response>)>,
 }
 
 impl Host {
     /// `mods_dir` is scanned for `*/mod.toml` at every new game.
     pub fn spawn(mods_dir: Option<PathBuf>) -> Host {
-        let (tx, rx) = mpsc::channel::<(Request, mpsc::Sender<Response>)>();
+        let (tx, rx) = mpsc::channel::<(Msg, mpsc::Sender<Response>)>();
         std::thread::spawn(move || {
             let mut session = Session::new(mods_dir);
-            for (req, reply) in rx {
-                let resp = session.handle(req).unwrap_or_else(|message| Response::Error { message });
+            for (msg, reply) in rx {
+                let resp = match msg {
+                    Msg::Req(req) => session.handle(req).unwrap_or_else(|message| Response::Error { message }),
+                    Msg::SetProject(p) => {
+                        session.project = p.map(|b| *b);
+                        Response::Ok
+                    }
+                };
                 let _ = reply.send(resp);
             }
         });
         Host { tx }
     }
 
+    /// Set (or clear) the project mod used by the next `new_game`.
+    pub fn set_project(&self, project: Option<ModSource>) {
+        self.send(Msg::SetProject(project.map(Box::new)));
+    }
+
     pub fn request(&self, req: Request) -> Response {
+        self.send(Msg::Req(req))
+    }
+
+    fn send(&self, req: Msg) -> Response {
         let (rtx, rrx) = mpsc::channel();
         if self.tx.send((req, rtx)).is_err() {
             return Response::Error { message: "engine thread stopped".into() };
@@ -120,11 +147,12 @@ struct Session {
     explored: HashSet<Pos>,
     graphs: Library,
     over: bool,
+    project: Option<ModSource>,
 }
 
 impl Session {
     fn new(mods_dir: Option<PathBuf>) -> Self {
-        Self { mods_dir, engine: None, explored: HashSet::new(), graphs: Library::builtin(), over: false }
+        Self { mods_dir, engine: None, explored: HashSet::new(), graphs: Library::builtin(), over: false, project: None }
     }
 
     fn engine(&self) -> Result<&Engine, String> {
@@ -138,7 +166,10 @@ impl Session {
                 if let Some(dir) = &self.mods_dir {
                     e.load_mods_dir(dir).map_err(|e| e.to_string())?;
                 }
-                e.exec("rogue.rules.new_game(1)").map_err(|e| e.to_string())?;
+                if let Some(p) = &self.project {
+                    e.load_mods(vec![p.clone()]).map_err(|e| e.to_string())?;
+                }
+                e.exec("rogue.rules.new_game()").map_err(|e| e.to_string())?;
                 e.advance().map_err(|e| e.to_string())?;
                 self.explored.clear();
                 self.over = false;
@@ -174,6 +205,8 @@ impl Session {
 
     fn snapshot(&mut self) -> Result<Response, String> {
         let engine = self.engine.as_ref().ok_or("no game")?;
+        // Lua must run while the world is NOT borrowed (mods may write to it).
+        let hud = hud_rows(engine);
         let world = engine.world.borrow();
         let player_id = world.find_tagged("player").next();
         let mut fog = vec![0u8; (world.map.width * world.map.height) as usize];
@@ -192,13 +225,13 @@ impl Session {
                 fog[(p.y * world.map.width + p.x) as usize] = 2;
             }
         }
-        let view = |id: rogue_core::EntityId| world.get(id).map(|e| EntityView { id: id.to_u64(), x: e.pos.x, y: e.pos.y, name: e.name.clone(), kind: e.kind.clone(), glyph: e.glyph, sprite: e.sprite.clone() });
+        let view = |id: rogue_core::EntityId| world.get(id).map(|e| EntityView { id: id.to_u64(), x: e.pos.x, y: e.pos.y, name: e.name.clone(), kind: e.kind.clone(), glyph: e.glyph, sprite: e.sprite.clone(), color: e.color.clone() });
         let entities = world.ids().filter(|id| world.get(*id).is_some_and(|e| e.carried_by.is_none() && visible.contains(&e.pos))).filter_map(view).collect();
         let (hp, max_hp) = player_id.and_then(|id| world.get(id)?.stats.as_ref().map(|s| (s.hp, world.stat(id, "max_hp")))).unwrap_or((0, 0));
         let inventory = player_id.and_then(|id| world.get(id)?.inventory.as_ref()).map(|inv| {
             inv.items.iter().filter_map(|i| {
                 let e = world.get(*i)?;
-                Some(ItemView { id: i.to_u64(), name: e.name.clone(), glyph: e.glyph, equipped: inv.equipped.values().any(|v| v == i), usable: e.item.as_ref().is_some_and(|it| it.on_use.is_some()) })
+                Some(ItemView { id: i.to_u64(), name: e.name.clone(), glyph: e.glyph, sprite: e.sprite.clone(), color: e.color.clone(), slot: e.item.as_ref().and_then(|it| it.slot.clone()), equipped: inv.equipped.values().any(|v| v == i), usable: e.item.as_ref().is_some_and(|it| it.on_use.is_some()) })
             }).collect()
         }).unwrap_or_default();
         let log = world.log.iter().rev().take(50).rev().cloned().collect();
@@ -214,6 +247,7 @@ impl Session {
             max_hp,
             inventory,
             log,
+            hud,
             game_over: self.over || player_id.is_none(),
         })))
     }
@@ -228,4 +262,8 @@ fn tiles_of(world: &World) -> Vec<u16> {
         }
     }
     v
+}
+
+fn hud_rows(engine: &Engine) -> Vec<[String; 2]> {
+    engine.eval_json("rogue.rules.hud()").ok().and_then(|v| serde_json::from_value(v).ok()).unwrap_or_default()
 }

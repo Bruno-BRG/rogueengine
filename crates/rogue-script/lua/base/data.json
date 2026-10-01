@@ -1,30 +1,56 @@
 {
   "tiles": {
-    "floor": { "name": "Floor", "glyph": "." },
-    "wall":  { "name": "Wall", "glyph": "#", "walkable": false, "transparent": false },
-    "door":  { "name": "Door", "glyph": "+", "transparent": false, "tags": ["door"] }
+    "floor":       { "name": "Floor", "glyph": ".", "color": "#3b4252", "sprite": "floor" },
+    "wall":        { "name": "Wall", "glyph": "#", "color": "#6b7488", "sprite": "wall", "walkable": false, "transparent": false },
+    "door":        { "name": "Door", "glyph": "+", "color": "#b8864b", "transparent": false, "tags": ["door"] },
+    "stairs_down": { "name": "Stairs Down", "glyph": ">", "color": "#f5b942", "sprite": "stairs_down", "tags": ["stairs_down"] }
   },
   "entities": {
     "player": {
-      "name": "You", "glyph": "@", "blocks": true,
+      "name": "You", "glyph": "@", "color": "#ffd166", "sprite": "hero", "blocks": true,
       "stats": { "hp": 30, "max_hp": 30, "attack": 4, "defense": 1, "speed": 100 },
       "tags": ["actor", "player"],
-      "inventory": { "capacity": 20 }
+      "inventory": { "capacity": 20 },
+      "data": { "xp": 0, "level": 1 }
+    },
+    "rat": {
+      "name": "Giant Rat", "glyph": "r", "color": "#a08060", "sprite": "rat", "blocks": true,
+      "stats": { "hp": 4, "max_hp": 4, "attack": 2, "defense": 0, "speed": 120 },
+      "tags": ["actor", "monster"],
+      "data": { "sight": 7, "xp": 3, "spawn": { "min_depth": 1, "max_depth": 3, "weight": 8 } }
     },
     "goblin": {
-      "name": "Goblin", "glyph": "g", "blocks": true,
+      "name": "Goblin", "glyph": "g", "color": "#6fbf5f", "sprite": "goblin", "blocks": true,
       "stats": { "hp": 8, "max_hp": 8, "attack": 3, "defense": 0, "speed": 100 },
       "tags": ["actor", "monster"],
-      "data": { "sight": 8 }
+      "data": { "sight": 8, "xp": 6, "spawn": { "min_depth": 1, "max_depth": 6, "weight": 10 } }
+    },
+    "skeleton": {
+      "name": "Skeleton", "glyph": "s", "color": "#d8dce3", "sprite": "skeleton", "blocks": true,
+      "stats": { "hp": 14, "max_hp": 14, "attack": 5, "defense": 2, "speed": 90 },
+      "tags": ["actor", "monster"],
+      "data": { "sight": 8, "xp": 12, "spawn": { "min_depth": 3, "max_depth": 99, "weight": 8 } }
+    },
+    "orc": {
+      "name": "Orc", "glyph": "O", "color": "#4f9d5f", "sprite": "orc", "blocks": true,
+      "stats": { "hp": 24, "max_hp": 24, "attack": 7, "defense": 3, "speed": 100 },
+      "tags": ["actor", "monster"],
+      "data": { "sight": 9, "xp": 25, "spawn": { "min_depth": 5, "max_depth": 99, "weight": 6 } }
     },
     "potion_heal": {
-      "name": "Healing Potion", "glyph": "!",
-      "item": { "on_use": "heal", "stackable": true },
-      "data": { "heal_amount": 10 }
+      "name": "Healing Potion", "glyph": "!", "color": "#e5484d", "sprite": "potion",
+      "item": { "on_use": "heal" },
+      "data": { "heal_amount": 12, "spawn": { "min_depth": 1, "max_depth": 99, "weight": 10, "kind": "item" } }
     },
     "iron_sword": {
-      "name": "Iron Sword", "glyph": "/",
-      "item": { "slot": "weapon", "modifiers": { "attack": 3 } }
+      "name": "Iron Sword", "glyph": "/", "color": "#b8c4d6", "sprite": "sword",
+      "item": { "slot": "weapon", "modifiers": { "attack": 3 } },
+      "data": { "spawn": { "min_depth": 1, "max_depth": 99, "weight": 3, "kind": "item" } }
+    },
+    "leather_armor": {
+      "name": "Leather Armor", "glyph": "[", "color": "#b8864b", "sprite": "armor",
+      "item": { "slot": "body", "modifiers": { "defense": 2 } },
+      "data": { "spawn": { "min_depth": 1, "max_depth": 99, "weight": 3, "kind": "item" } }
     }
   }
 }

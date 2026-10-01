@@ -1,6 +1,6 @@
 [
   {"type":"event.died","kind":"event","title":"On Died","category":"Events",
-   "outputs":[{"name":"then","ty":"exec"},{"name":"entity","ty":"entity","expr":"ev.id"},{"name":"killer","ty":"entity","expr":"ev.killer"}],
+   "outputs":[{"name":"then","ty":"exec"},{"name":"entity","ty":"entity","expr":"ev.id"},{"name":"killer","ty":"entity","expr":"ev.killer"},{"name":"kind","ty":"string","expr":"ev.kind"},{"name":"x","ty":"number","expr":"ev.pos.x"},{"name":"y","ty":"number","expr":"ev.pos.y"}],
    "template":"rogue.on(\"died\", function(ev)\n${then}\nend)"},
   {"type":"event.attacked","kind":"event","title":"On Attacked","category":"Events",
    "outputs":[{"name":"then","ty":"exec"},{"name":"attacker","ty":"entity","expr":"ev.attacker"},{"name":"target","ty":"entity","expr":"ev.target"},{"name":"damage","ty":"number","expr":"ev.damage"}],

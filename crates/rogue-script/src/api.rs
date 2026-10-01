@@ -180,6 +180,23 @@ pub fn install(lua: &Lua, world: W, registry: R) -> mlua::Result<()> {
         Ok(())
     });
 
+    // ---- world state & level management
+    f!("clear_level", w, |_, keep: Vec<u64>| {
+        let keep: Vec<EntityId> = keep.into_iter().map(id).collect();
+        w.borrow_mut().clear_level(&keep);
+        Ok(())
+    });
+    f!("world_get", w, |lua, key: String| match w.borrow().vars.get(&key) {
+        Some(v) => lua.to_value_with(v, nopt()),
+        None => Ok(LuaValue::Nil),
+    });
+    f!("world_set", w, |lua, (key, v): (String, LuaValue)| {
+        let json: serde_json::Value = lua.from_value(v)?;
+        let mut w = w.borrow_mut();
+        if json.is_null() { w.vars.remove(&key); } else { w.vars.insert(key, json); }
+        Ok(())
+    });
+
     // ---- misc
     f!("log", w, |_, text: String| { w.borrow_mut().message(text); Ok(()) });
     f!("random", w, |_, (lo, hi): (i32, i32)| Ok(w.borrow_mut().rng.range(lo, hi)));
@@ -191,6 +208,11 @@ pub fn install(lua: &Lua, world: W, registry: R) -> mlua::Result<()> {
         rogue.set("register_tile", lua.create_function(move |lua, (tid, def): (String, LuaValue)| {
             let json: serde_json::Value = lua.from_value(def)?;
             registry::register_tile(&mut w.borrow_mut(), &tid, json).map_err(|e| rt(e.to_string()))
+        })?)?;
+        let r2 = registry.clone();
+        rogue.set("definitions", lua.create_function(move |lua, _a: ()| {
+            let r = r2.borrow();
+            lua.to_value_with(&r.entities, nopt())
         })?)?;
         rogue.set("register_entity", lua.create_function(move |lua, (eid, def): (String, LuaValue)| {
             let json: serde_json::Value = lua.from_value(def)?;
